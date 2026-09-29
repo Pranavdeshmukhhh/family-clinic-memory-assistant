@@ -235,7 +235,7 @@ async function loadQueue(manual=false){
     prevCount = list.length;
 
     const el = document.getElementById('queue');
-    if(list.length === 0){ el.innerHTML='<div class="empty">✅ Queue is clear. No pending prescriptions.</div>'; return; }
+    if(list.length === 0){ el.innerHTML='<div class="empty">No pending prescriptions right now.</div>'; return; }
 
     el.innerHTML = list.map(rx => `
       <div class="rx-card" id="rx-${rx.prescription_id}">

@@ -158,9 +158,22 @@
     /* ── Alerts ── */
     .alert { border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5; display: none; }
     .alert.show { display: flex; align-items: flex-start; gap: 10px; }
-    .alert-red    { background: var(--red-lt); border: 1px solid #fca5a5; color: var(--red); }
+    /* Allergy warning: thick red border, strong tint — must be visible on screen recordings */
+    .alert-red    { background: #fff0f0; border: 2px solid var(--red); color: #991b1b; font-weight: 600; }
     .alert-green  { background: var(--green-lt); border: 1px solid #86efac; color: var(--green); }
     .alert-orange { background: var(--orange-lt); border: 1px solid #fcd34d; color: var(--orange); }
+
+    /* ── Char counter ── */
+    .char-row { display: flex; justify-content: flex-end; margin-top: -8px; margin-bottom: 8px; }
+    .char-count { font-size: 11px; color: var(--muted); }
+    .char-count.warn { color: var(--orange); font-weight: 700; }
+    .char-count.over { color: var(--red); font-weight: 700; }
+
+    /* ── Memory-used panel ── */
+    .mem-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: none; }
+    .mem-panel.show { display: block; }
+    .mem-panel-head { padding: 9px 14px; background: #fafafa; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .mem-panel-body { padding: 12px 14px; font-size: 12px; color: #374151; line-height: 1.7; white-space: pre-wrap; max-height: 110px; overflow-y: auto; }
 
     /* ── Result card ── */
     .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
@@ -344,9 +357,11 @@
 
     <div class="section">
       <div class="section-title">Visit</div>
-      <label for="sym">Symptoms *</label>
-      <textarea id="sym" placeholder="Describe presenting symptoms…" rows="3" oninput="ce('sym','e-sym')"></textarea>
-      <div class="err-msg" id="e-sym">Please describe symptoms.</div>
+      <label for="sym">Symptoms * <span style="font-weight:400;color:var(--muted);font-size:11px;">(max 1000 chars)</span></label>
+      <textarea id="sym" placeholder="Describe presenting symptoms…" rows="3" maxlength="1000"
+        oninput="ce('sym','e-sym'); updateCharCount()"></textarea>
+      <div class="char-row"><span class="char-count" id="char-count">0 / 1000</span></div>
+      <div class="err-msg" id="e-sym">Please describe symptoms (required, max 1000 chars).</div>
 
       <label for="notes">Doctor Notes <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
       <textarea id="notes" placeholder="Observations, vitals…" rows="2"></textarea>
@@ -471,6 +486,12 @@
       </div>
     </div>
 
+    <!-- Memory Used panel (populated by fillResult) -->
+    <div class="mem-panel" id="mem-panel">
+      <div class="mem-panel-head">🧠 Hindsight Memory Recalled</div>
+      <div class="mem-panel-body" id="mem-panel-body"></div>
+    </div>
+
     <!-- Medicine Alternatives panel (appears after result) -->
     <div class="card alt-card" id="alt-card">
       <div class="card-head">
@@ -522,14 +543,38 @@ function hideLoad(id){ document.getElementById(id).classList.remove('show'); }
 function showEl(id){ document.getElementById(id).classList.add('show'); }
 function hideEl(id){ document.getElementById(id).classList.remove('show'); }
 function lock(on){
-  document.getElementById('btn-submit').disabled = on;
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = on;
+  btn.textContent = on ? '⏳ Processing…' : 'Submit Consultation';
   document.getElementById('btn-compare').disabled = on;
 }
 function validate(){
-  let ok=true;
-  if(!document.getElementById('pid').value.trim()){ document.getElementById('pid').classList.add('err'); showEl('e-pid'); ok=false; }
-  if(!document.getElementById('sym').value.trim()){ document.getElementById('sym').classList.add('err'); showEl('e-sym'); ok=false; }
+  let ok = true;
+  const pid = document.getElementById('pid').value.trim();
+  const sym = document.getElementById('sym').value.trim();
+  if(!pid){
+    document.getElementById('pid').classList.add('err');
+    showEl('e-pid');
+    ok = false;
+  }
+  if(!sym){
+    document.getElementById('sym').classList.add('err');
+    document.getElementById('e-sym').textContent = 'Please describe symptoms (required).';
+    showEl('e-sym');
+    ok = false;
+  } else if(sym.length > 1000){
+    document.getElementById('sym').classList.add('err');
+    document.getElementById('e-sym').textContent = `Symptoms too long (${sym.length}/1000 chars). Please shorten.`;
+    showEl('e-sym');
+    ok = false;
+  }
   return ok;
+}
+function updateCharCount(){
+  const len = document.getElementById('sym').value.length;
+  const el  = document.getElementById('char-count');
+  el.textContent = `${len} / 1000`;
+  el.className = 'char-count' + (len > 1000 ? ' over' : len > 800 ? ' warn' : '');
 }
 function payload(mem){
   return {
@@ -645,6 +690,21 @@ function fillResult(d){
   ].join(' ');
 
   document.getElementById('r-body').style.display = 'block';
+
+  // Populate memory-used panel
+  const memPanel = document.getElementById('mem-panel');
+  const memBody  = document.getElementById('mem-panel-body');
+  if(d.use_memory){
+    const txt = d.is_new_patient
+      ? 'No prior history — first visit. New patient bank created.'
+      : (d.memory_used && d.memory_used !== 'Memory disabled (use_memory=false)'
+          ? d.memory_used
+          : 'Bank exists but no relevant memories found for this query.');
+    memBody.textContent = txt;
+    memPanel.classList.add('show');
+  } else {
+    memPanel.classList.remove('show');
+  }
 }
 
 let _currentRxId = null;
@@ -676,6 +736,9 @@ async function doApprove(){
   const med  = document.getElementById('draft-med').value.trim();
   const dose = document.getElementById('draft-dose').value.trim();
 
+  const appBtn = document.getElementById('btn-approve');
+  appBtn.textContent = '⏳ Sending…';
+
   try {
     const res = await fetch(`${API}/doctor/approve`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -685,6 +748,7 @@ async function doApprove(){
       let msg = `Error ${res.status}`; try{msg=(await res.json()).detail||msg;}catch{}
       showErr('approval-err', `❌ ${msg}`);
       document.getElementById('btn-approve').disabled = false;
+      document.getElementById('btn-approve').textContent = '✅ Approve & Send to Pharmacy';
       document.getElementById('btn-reject-action').disabled = false;
       return;
     }
@@ -701,6 +765,7 @@ async function doApprove(){
   } catch(e){
     showErr('approval-err', `❌ ${e.message}`);
     document.getElementById('btn-approve').disabled = false;
+    document.getElementById('btn-approve').textContent = '✅ Approve & Send to Pharmacy';
     document.getElementById('btn-reject-action').disabled = false;
   } finally {
     hideLoad('approval-loading');
@@ -843,6 +908,7 @@ async function loadRisk(){
   if(!pid) return;
   const btn = document.getElementById('btn-risk');
   btn.disabled = true;
+  btn.textContent = '⏳…';
   hideErr('risk-err');
   document.getElementById('risk-content').classList.remove('show');
   showLoad('risk-loading');
@@ -855,12 +921,17 @@ async function loadRisk(){
       showErr('risk-err',d); return;
     }
     const data = await res.json();
-    document.getElementById('risk-content').textContent = data.summary;
+    const summary = data.summary || '';
+    if(!summary || summary.toLowerCase().includes('no history') || summary.trim() === ''){
+      document.getElementById('risk-content').textContent = 'No history yet for this patient.';
+    } else {
+      document.getElementById('risk-content').textContent = summary;
+    }
     document.getElementById('risk-content').classList.add('show');
   } catch(e){
     showErr('risk-err',`❌ ${e.message}`);
   } finally {
-    hideLoad('risk-loading'); btn.disabled=false;
+    hideLoad('risk-loading'); btn.disabled=false; btn.textContent='Load';
   }
 }
 
