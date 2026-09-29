@@ -248,6 +248,49 @@
     .loading.show { display: flex; }
     .fetch-err { display: none; font-size: 13px; color: var(--red); background: var(--red-lt); border: 1px solid #fca5a5; border-radius: 7px; padding: 10px 12px; }
     .fetch-err.show { display: block; }
+
+    /* ── Draft approval card ── */
+    .draft-card {
+      background: var(--white);
+      border: 2px solid var(--orange);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: none;
+    }
+    .draft-card.show { display: block; }
+    .draft-head {
+      background: var(--orange-lt);
+      border-bottom: 1px solid #fcd34d;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .draft-head-title { font-size: 13px; font-weight: 700; color: var(--orange); flex: 1; }
+    .draft-body { padding: 14px 16px; }
+    .draft-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    @media(max-width:520px){ .draft-fields { grid-template-columns: 1fr; } }
+    .draft-field label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:4px; }
+    .draft-field input {
+      width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+      font-size:13px; font-family:inherit; background:#fafafa; color:var(--text); outline:none;
+      transition: border .15s, box-shadow .15s;
+    }
+    .draft-field input:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(217,119,6,.12); background:var(--white); }
+    .draft-actions { display: flex; gap: 8px; }
+    .btn-approve {
+      flex: 1; padding:10px 16px; border:none; border-radius:8px;
+      background:var(--green); color:#fff; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:inherit; transition:opacity .15s;
+    }
+    .btn-approve:hover { opacity:.88; }
+    .btn-approve:disabled { opacity:.45; cursor:not-allowed; }
+    .btn-reject {
+      padding:10px 16px; border:1px solid #fca5a5; border-radius:8px;
+      background:var(--red-lt); color:var(--red); font-size:13px; font-weight:600;
+      cursor:pointer; font-family:inherit; transition:opacity .15s;
+    }
+    .btn-reject:hover { opacity:.8; }
+    .btn-reject:disabled { opacity:.45; cursor:not-allowed; }
+    .draft-hint { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -348,10 +391,44 @@
       <div><strong>Drug / Allergy Warning</strong><br><span id="warn-txt"></span></div>
     </div>
 
-    <!-- Sent to pharmacy notice -->
+    <!-- Sent to pharmacy notice (shown after approve) -->
     <div class="alert alert-green" id="rx-notice">
       <span>✅</span>
-      <div>Prescription sent to pharmacy queue. <a href="/pharmacy" style="color:var(--green);font-weight:700;">Open Pharmacy →</a></div>
+      <div>Prescription approved and sent to pharmacy queue. <a href="/pharmacy" style="color:var(--green);font-weight:700;">Open Pharmacy →</a></div>
+    </div>
+
+    <!-- Rejected notice -->
+    <div class="alert alert-orange" id="reject-notice">
+      <span>🚫</span>
+      <div id="reject-notice-txt">AI suggestion rejected. No prescription sent to pharmacy.</div>
+    </div>
+
+    <!-- Draft approval card (appears right after consultation) -->
+    <div class="draft-card" id="draft-card">
+      <div class="draft-head">
+        <span style="font-size:16px;">📝</span>
+        <div class="draft-head-title">AI Suggestion — Awaiting Your Approval</div>
+        <span style="font-size:11px;color:var(--orange);font-weight:600;">DRAFT</span>
+      </div>
+      <div class="draft-body">
+        <div class="draft-hint">Review the AI suggestion below. You may edit the medicine or dosage before approving. The prescription only reaches the pharmacy after you click <strong>Approve</strong>.</div>
+        <div class="draft-fields">
+          <div class="draft-field">
+            <label for="draft-med">Medicine</label>
+            <input type="text" id="draft-med" placeholder="Medicine name">
+          </div>
+          <div class="draft-field">
+            <label for="draft-dose">Dosage</label>
+            <input type="text" id="draft-dose" placeholder="Dosage">
+          </div>
+        </div>
+        <div class="draft-actions">
+          <button class="btn-approve" id="btn-approve" onclick="doApprove()">✅ Approve &amp; Send to Pharmacy</button>
+          <button class="btn-reject" id="btn-reject-action" onclick="doReject()">🚫 Reject</button>
+        </div>
+        <div class="loading" id="approval-loading" style="margin-top:10px;"><div class="spin"></div> Processing…</div>
+        <div class="fetch-err" id="approval-err" style="margin-top:10px;"></div>
+      </div>
     </div>
 
     <!-- Consultation result -->
@@ -513,7 +590,8 @@ function selectPatient(pid){
 async function doVisit(){
   if(!validate()) return;
   hideErr('main-err');
-  hideEl('warning'); hideEl('rx-notice');
+  hideEl('warning'); hideEl('rx-notice'); hideEl('reject-notice');
+  document.getElementById('draft-card').classList.remove('show');
   document.getElementById('cmp-card').style.display = 'none';
 
   // Show result card with loading
@@ -535,8 +613,9 @@ async function doVisit(){
     const d = await res.json();
     fillResult(d);
     if(d.warning){ document.getElementById('warn-txt').textContent=d.warning; showEl('warning'); }
-    showEl('rx-notice');
-    setTimeout(()=>hideEl('rx-notice'), 10000);
+
+    // Show draft card — do NOT auto-send to pharmacy
+    showDraftCard(d);
 
     // Trigger alternatives
     loadAlternatives(d.prescription.medicine_name);
@@ -561,12 +640,111 @@ function fillResult(d){
   const tags = document.getElementById('result-tags');
   tags.innerHTML = [
     d.use_memory ? '<span class="tag tag-blue">🧠 Memory</span>' : '<span class="tag tag-orange">No Memory</span>',
-    `<span class="tag tag-green">Rx #${d.prescription.prescription_id}</span>`,
+    `<span class="tag tag-orange">📝 Draft #${d.prescription.prescription_id}</span>`,
     d.is_new_patient ? '<span class="tag tag-orange">New Patient</span>' : '',
   ].join(' ');
 
   document.getElementById('r-body').style.display = 'block';
 }
+
+let _currentRxId = null;
+let _currentMed  = null;
+
+function showDraftCard(d){
+  _currentRxId = d.prescription.prescription_id;
+  _currentMed  = d.prescription.medicine_name;
+  document.getElementById('draft-med').value  = d.prescription.medicine_name || '';
+  document.getElementById('draft-dose').value = d.prescription.dosage || '';
+  document.getElementById('btn-approve').disabled = false;
+  document.getElementById('btn-reject-action').disabled = false;
+  hideErr('approval-err');
+  hideLoad('approval-loading');
+  document.getElementById('draft-card').classList.add('show');
+}
+
+function hideDraftCard(){
+  document.getElementById('draft-card').classList.remove('show');
+}
+
+async function doApprove(){
+  if(!_currentRxId) return;
+  document.getElementById('btn-approve').disabled = true;
+  document.getElementById('btn-reject-action').disabled = true;
+  showLoad('approval-loading');
+  hideErr('approval-err');
+
+  const med  = document.getElementById('draft-med').value.trim();
+  const dose = document.getElementById('draft-dose').value.trim();
+
+  try {
+    const res = await fetch(`${API}/doctor/approve`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prescription_id: _currentRxId, medicine_name: med, dosage: dose }),
+    });
+    if(!res.ok){
+      let msg = `Error ${res.status}`; try{msg=(await res.json()).detail||msg;}catch{}
+      showErr('approval-err', `❌ ${msg}`);
+      document.getElementById('btn-approve').disabled = false;
+      document.getElementById('btn-reject-action').disabled = false;
+      return;
+    }
+    const rxId = _currentRxId;
+    _currentRxId = null;
+    hideDraftCard();
+    document.getElementById('result-tags').innerHTML = [
+      '<span class="tag tag-green">✅ Approved</span>',
+      `<span class="tag tag-green">Rx #${rxId}</span>`,
+    ].join(' ');
+    showEl('rx-notice');
+    setTimeout(()=>hideEl('rx-notice'), 12000);
+    loadStrip();
+  } catch(e){
+    showErr('approval-err', `❌ ${e.message}`);
+    document.getElementById('btn-approve').disabled = false;
+    document.getElementById('btn-reject-action').disabled = false;
+  } finally {
+    hideLoad('approval-loading');
+  }
+}
+
+async function doReject(){
+  if(!_currentRxId) return;
+  document.getElementById('btn-approve').disabled = true;
+  document.getElementById('btn-reject-action').disabled = true;
+  showLoad('approval-loading');
+  hideErr('approval-err');
+
+  const rejectedMed = _currentMed;
+
+  try {
+    const res = await fetch(`${API}/doctor/reject`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prescription_id: _currentRxId }),
+    });
+    if(!res.ok){
+      let msg = `Error ${res.status}`; try{msg=(await res.json()).detail||msg;}catch{}
+      showErr('approval-err', `❌ ${msg}`);
+      document.getElementById('btn-approve').disabled = false;
+      document.getElementById('btn-reject-action').disabled = false;
+      return;
+    }
+    _currentRxId = null;
+    hideDraftCard();
+    document.getElementById('result-tags').innerHTML = '<span class="tag tag-orange">🚫 Rejected</span>';
+    document.getElementById('reject-notice-txt').textContent =
+      `AI suggestion for "${rejectedMed || 'this prescription'}" rejected. No prescription sent to pharmacy.`;
+    showEl('reject-notice');
+    setTimeout(()=>hideEl('reject-notice'), 10000);
+  } catch(e){
+    showErr('approval-err', `❌ ${e.message}`);
+    document.getElementById('btn-approve').disabled = false;
+    document.getElementById('btn-reject-action').disabled = false;
+  } finally {
+    hideLoad('approval-loading');
+  }
+}
+
+
 
 /* ── Alternatives ── */
 async function loadAlternatives(medicine){

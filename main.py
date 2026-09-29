@@ -389,6 +389,16 @@ class DispenseRequest(BaseModel):
     prescription_id: str
 
 
+class ApproveRequest(BaseModel):
+    prescription_id: str
+    medicine_name: Optional[str] = None   # doctor may edit before approving
+    dosage: Optional[str] = None          # doctor may edit before approving
+
+
+class RejectRequest(BaseModel):
+    prescription_id: str
+
+
 class MedicineQuery(BaseModel):
     medicine_name: str
 
@@ -700,7 +710,7 @@ async def doctor_visit(req: VisitRequest):
             "warning": None,
         }
 
-    # ── Step 3: Create prescription ────────────────────────────────────────
+    # ── Step 3: Save as DRAFT — doctor must approve before pharmacy sees it ──
     rx_id = f"rx_{uuid.uuid4().hex[:8]}"
     medicine_name = ai_result.get("medicine_name", "Unknown")
     dosage = ai_result.get("dosage", "As directed")
@@ -708,7 +718,7 @@ async def doctor_visit(req: VisitRequest):
     conn = get_db()
     conn.execute(
         "INSERT INTO prescriptions (prescription_id, patient_id, medicine_name, dosage, notes, status, created_at) "
-        "VALUES (?, ?, ?, ?, ?, 'pending', ?)",
+        "VALUES (?, ?, ?, ?, ?, 'draft', ?)",
         (
             rx_id,
             patient_id,
@@ -721,19 +731,19 @@ async def doctor_visit(req: VisitRequest):
     conn.commit()
     conn.close()
 
-    # ── Step 4: Retain visit into Hindsight ────────────────────────────────
+    # ── Step 4: Retain visit notes only — NOT the prescription yet ─────────
+    # The prescription is retained to Hindsight only after doctor approval.
     if req.use_memory:
-        retain_content = (
+        visit_content = (
             f"Visit on {datetime.datetime.now().strftime('%Y-%m-%d')}. "
             f"Symptoms: {symptoms}. "
             f"{'Doctor notes: ' + notes + '. ' if notes else ''}"
-            f"Diagnosis: {ai_result.get('diagnosis', 'N/A')}. "
-            f"Prescribed: {medicine_name} {dosage}. "
-            f"{ai_result.get('instructions', '')}"
+            f"AI suggested diagnosis: {ai_result.get('diagnosis', 'N/A')}. "
+            f"Awaiting doctor approval before prescription is finalised."
         )
-        await _retain_patient(patient_id, retain_content, "doctor_visit")
+        await _retain_patient(patient_id, visit_content, "doctor_visit")
 
-    # ── Step 5 & 6: Return response ───────────────────────────────────────
+    # ── Step 5 & 6: Return draft response — UI shows approval buttons ──────
     return {
         "prescription": {
             "prescription_id": rx_id,
@@ -741,7 +751,7 @@ async def doctor_visit(req: VisitRequest):
             "medicine_name": medicine_name,
             "dosage": dosage,
             "notes": ai_result.get("instructions", ""),
-            "status": "pending",
+            "status": "draft",
         },
         "ai_diagnosis": ai_result.get("diagnosis", ""),
         "ai_reasoning": ai_result.get("reasoning", ""),
@@ -753,12 +763,124 @@ async def doctor_visit(req: VisitRequest):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  CORE — POST /doctor/approve
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/doctor/approve")
+async def doctor_approve(req: ApproveRequest):
+    conn = get_db()
+    rx = conn.execute(
+        "SELECT * FROM prescriptions WHERE prescription_id = ?",
+        (req.prescription_id,),
+    ).fetchone()
+
+    if not rx:
+        conn.close()
+        raise HTTPException(404, "Prescription not found")
+    if rx["status"] != "draft":
+        conn.close()
+        raise HTTPException(400, f"Cannot approve a prescription with status '{rx['status']}'")
+
+    # Doctor may override medicine_name or dosage before approving
+    final_medicine = (req.medicine_name or "").strip() or rx["medicine_name"]
+    final_dosage   = (req.dosage or "").strip() or rx["dosage"]
+    patient_id     = rx["patient_id"]
+
+    conn.execute(
+        "UPDATE prescriptions SET status='pending', medicine_name=?, dosage=? WHERE prescription_id=?",
+        (final_medicine, final_dosage, req.prescription_id),
+    )
+    conn.commit()
+    conn.close()
+
+    log.info(
+        "✅ APPROVED │ rx=%s │ patient=%s │ medicine=%s │ dosage=%s",
+        req.prescription_id, patient_id, final_medicine, final_dosage,
+    )
+
+    # Retain the approved prescription to Hindsight now
+    try:
+        await _retain_patient(
+            patient_id,
+            f"Dr approved prescription: {final_medicine} {final_dosage}. "
+            f"Sent to pharmacy on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
+            "doctor_approved",
+        )
+    except Exception:
+        pass  # non-fatal — prescription is already in pharmacy queue
+
+    return {
+        "prescription_id": req.prescription_id,
+        "patient_id": patient_id,
+        "medicine_name": final_medicine,
+        "dosage": final_dosage,
+        "status": "pending",
+        "message": "Prescription approved and sent to pharmacy.",
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  CORE — POST /doctor/reject
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/doctor/reject")
+async def doctor_reject(req: RejectRequest):
+    conn = get_db()
+    rx = conn.execute(
+        "SELECT * FROM prescriptions WHERE prescription_id = ?",
+        (req.prescription_id,),
+    ).fetchone()
+
+    if not rx:
+        conn.close()
+        raise HTTPException(404, "Prescription not found")
+    if rx["status"] != "draft":
+        conn.close()
+        raise HTTPException(400, f"Cannot reject a prescription with status '{rx['status']}'")
+
+    patient_id   = rx["patient_id"]
+    medicine_name = rx["medicine_name"]
+
+    conn.execute(
+        "UPDATE prescriptions SET status='rejected' WHERE prescription_id=?",
+        (req.prescription_id,),
+    )
+    conn.commit()
+    conn.close()
+
+    log.info(
+        "🚫 REJECTED │ rx=%s │ patient=%s │ medicine=%s",
+        req.prescription_id, patient_id, medicine_name,
+    )
+
+    # Retain rejection note to Hindsight
+    try:
+        await _retain_patient(
+            patient_id,
+            f"Suggestion rejected by doctor: {medicine_name}. "
+            f"Rejected on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
+            "doctor_rejected",
+        )
+    except Exception:
+        pass  # non-fatal
+
+    return {
+        "prescription_id": req.prescription_id,
+        "patient_id": patient_id,
+        "medicine_name": medicine_name,
+        "status": "rejected",
+        "message": "Prescription rejected.",
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  CORE — GET /pharmacy/pending
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/pharmacy/pending")
 async def pharmacy_pending():
     conn = get_db()
+    # Only status='pending' reaches the pharmacy — drafts and rejected are excluded
     rows = conn.execute(
         "SELECT * FROM prescriptions WHERE status = 'pending' ORDER BY created_at DESC"
     ).fetchall()
