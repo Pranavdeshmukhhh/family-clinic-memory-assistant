@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Counter — Family Clinic</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08100f;
+      --surface: #0d1a18;
+      --surface2: #132420;
+      --surface3: #1a2e2a;
+      --border: #1f3530;
+      --text: #e0f0ee;
+      --text-dim: #6a9994;
+      --accent: #00cec9;
+      --accent-dim: rgba(0,206,201,0.12);
+      --accent-glow: rgba(0,206,201,0.3);
+      --purple: #7c5ce7;
+      --purple-dim: rgba(124,92,231,0.15);
+      --red: #ff6b6b;
+      --red-dim: rgba(255,107,107,0.12);
+      --orange: #fdcb6e;
+      --orange-dim: rgba(253,203,110,0.12);
+      --radius: 14px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .topbar-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .topbar-back:hover { background: var(--surface2); color: var(--text); }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    .topbar-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .topbar-name { font-size: 15px; font-weight: 700; }
+    .topbar-sub { font-size: 11px; color: var(--text-dim); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 5px 10px;
+      border-radius: 100px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .auto-refresh-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+    }
+    .refresh-icon { animation: spin 3s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Layout: 3 columns ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 360px 280px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr 320px; } }
+    @media (max-width: 750px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Column shared styles ── */
+    .col {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .col:last-child { border-right: none; }
+
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .col-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .col-action {
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-dim);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .col-action:hover { border-color: var(--accent); color: var(--accent); }
+    .col-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Prescription Queue Items ── */
+    .rx-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .rx-item::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 3px 0 0 3px;
+    }
+    .rx-item:hover {
+      border-color: var(--accent);
+      transform: translateX(2px);
+    }
+    .rx-item.dispensing {
+      border-color: var(--orange);
+      background: rgba(253,203,110,0.05);
+    }
+    .rx-item.dispensing::before { background: var(--orange); }
+    .rx-item.done {
+      opacity: 0.45;
+      border-color: var(--border);
+    }
+    .rx-item.done::before { background: #2e4a47; }
+
+    .rx-id { font-size: 10px; color: var(--text-dim); font-family: monospace; margin-bottom: 4px; }
+    .rx-patient {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .rx-medicine {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .rx-dosage { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+    .rx-age { font-size: 11px; color: var(--text-dim); }
+
+    .rx-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-dispense {
+      flex: 1;
+      padding: 9px 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: var(--bg);
+      transition: all 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-dispense:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .btn-dispense:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--surface3);
+      color: var(--text-dim);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 48px 16px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.35; }
+
+    /* ── Loading ── */
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .loading-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 12px 0;
+    }
+    .loading-row.show { display: flex; }
+
+    /* ── Dispense result panel ── */
+    .dispense-result {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .dispense-result.show { display: flex; animation: fadein 0.3s ease; }
+    @keyframes fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    .result-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .result-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+    .result-value { font-size: 14px; font-weight: 600; }
+
+    .divider { height: 1px; background: var(--border); }
+
+    .alert-box {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .alert-warning { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(253,203,110,0.25); }
+    .alert-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,107,107,0.25); }
+    .alert-success { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,206,201,0.25); }
+
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 100px;
+      font-size: 11px; font-weight: 700;
+    }
+    .tag-green { background: var(--accent-dim); color: var(--accent); }
+    .tag-orange { background: var(--orange-dim); color: var(--orange); }
+    .tag-purple { background: var(--purple-dim); color: var(--purple); }
+    .tag-red { background: var(--red-dim); color: var(--red); }
+
+    .fetch-err {
+      padding: 10px 14px;
+      background: var(--red-dim);
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 13px;
+      display: none;
+    }
+    .fetch-err.show { display: block; }
+
+    /* ── Inventory ── */
+    .inv-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      transition: border 0.2s;
+    }
+    .inv-item:hover { border-color: var(--accent); }
+    .inv-item.low { border-color: rgba(255,107,107,0.4); background: var(--red-dim); }
+
+    .inv-name { font-weight: 600; margin-bottom: 2px; }
+    .inv-meta { font-size: 11px; color: var(--text-dim); }
+
+    .inv-qty {
+      font-size: 18px;
+      font-weight: 800;
+      text-align: right;
+    }
+    .inv-qty.ok { color: var(--accent); }
+    .inv-qty.low { color: var(--red); }
+    .inv-badge { font-size: 10px; font-weight: 600; text-align: right; }
+    .inv-badge.ok { color: var(--text-dim); }
+    .inv-badge.low { color: var(--red); }
+
+    /* ── Context preview ── */
+    .memory-preview {
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--surface3);
+      border-radius: 8px;
+      padding: 8px 10px;
+      line-height: 1.6;
+      max-height: 100px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    /* ── New Rx notification toast ── */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,206,201,0.2);
+      z-index: 999;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; pointer-events: all; }
+    .toast-icon { font-size: 20px; }
+
+    /* ── Countdown badge ── */
+    .countdown {
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 10px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <a href="/" class="topbar-back">← Back</a>
+  <div class="topbar-title">
+    <div class="topbar-icon">💊</div>
+    <div>
+      <div class="topbar-name">Pharmacy Counter</div>
+      <div class="topbar-sub">Dispense &amp; Inventory Management</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="auto-refresh-badge">
+      <span class="refresh-icon">↻</span>
+      Auto-refresh
+      <span class="countdown" id="countdown">15s</span>
+    </div>
+    <div class="topbar-status">
+      <div class="status-dot"></div>
+      Connected
+    </div>
+  </div>
+</div>
+
+<!-- 3-column layout -->
+<div class="layout">
+
+  <!-- ── Column 1: Pending Queue ── -->
+  <div class="col">
+    <div class="col-header">
+      <div class="col-title">💊 Pending Queue</div>
+      <button class="col-action" id="btn-refresh" onclick="loadPending(true)">↻ Refresh</button>
+    </div>
+
+    <div id="queue-loading" class="loading-row">
+      <div class="spinner"></div> Loading prescriptions&hellip;
+    </div>
+    <div id="queue-err" class="fetch-err"></div>
+    <div id="queue-list"></div>
+  </div>
+
+  <!-- ── Column 2: Dispense Result ── -->
+  <div class="col">
+    <div class="col-header">
+      <div class="col-title">📋 Dispense Result</div>
+    </div>
+
+    <div id="dispense-loading" class="loading-row">
+      <div class="spinner"></div> Dispensing&hellip;
+    </div>
+    <div id="dispense-err" class="fetch-err"></div>
+
+    <div id="dispense-empty" class="empty-state">
+      <div class="empty-icon">📋</div>
+      Click <strong>Dispense</strong> on a prescription to process it.
+    </div>
+
+    <div class="dispense-result" id="dispense-result"></div>
+  </div>
+
+  <!-- ── Column 3: Inventory ── -->
+  <div class="col" id="inv-col">
+    <div class="col-header">
+      <div class="col-title">📦 Inventory</div>
+      <button class="col-action" onclick="loadInventory()">Refresh</button>
+    </div>
+
+    <div id="inv-loading" class="loading-row">
+      <div class="spinner"></div> Loading&hellip;
+    </div>
+    <div id="inv-err" class="fetch-err"></div>
+    <div id="inv-list"></div>
+  </div>
+
+</div>
+
+<!-- New Rx toast -->
+<div class="toast" id="toast">
+  <div class="toast-icon">💊</div>
+  <div>
+    <strong>New prescription arrived!</strong><br>
+    <span style="font-size:12px;color:var(--text-dim);" id="toast-body"></span>
+  </div>
+</div>
+
+<script>
+const API = '';
+let prevCount = null;
+let countdownVal = 15;
+let countdownInterval = null;
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.classList.add('show'); }
+}
+function hideErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+function showLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('show');
+}
+function hideLoading(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+function showToast(msg) {
+  document.getElementById('toast-body').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+// ── Load pending queue ──
+async function loadPending(manual = false) {
+  const btn = document.getElementById('btn-refresh');
+  if (manual) btn.disabled = true;
+  hideErr('queue-err');
+  showLoading('queue-loading');
+
+  try {
+    const res = await fetch(`${API}/pharmacy/pending`);
+    if (!res.ok) {
+      let d = `Server error ${res.status}`;
+      try { d = (await res.json()).detail || d; } catch {}
+      showErr('queue-err', `❌ ${d}`);
+      return;
+    }
+    const data = await res.json();
+    const pending = data.pending || [];
+
+    // Detect new items vs previous load
+    if (prevCount !== null && pending.length > prevCount) {
+      const diff = pending.length - prevCount;
+      showToast(`${diff} new prescription${diff > 1 ? 's' : ''} from Doctor's Desk`);
+    }
+    prevCount = pending.length;
+
+    const list = document.getElementById('queue-list');
+    if (pending.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">✅</div>
+          Queue is clear — no pending prescriptions.
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = pending.map(rx => `
+      <div class="rx-item" id="rx-${rx.prescription_id}">
+        <div class="rx-id">${rx.prescription_id}</div>
+        <div class="rx-patient">👤 ${rx.patient_id}</div>
+        <div class="rx-medicine">${rx.medicine_name}</div>
+        <div class="rx-dosage">${rx.dosage}</div>
+        <div class="rx-age" style="margin-bottom:10px;">📅 ${new Date(rx.created_at).toLocaleTimeString()}</div>
+        <div class="rx-actions">
+          <button class="btn-dispense" id="btn-d-${rx.prescription_id}"
+                  onclick="dispense('${rx.prescription_id}', '${rx.medicine_name}', '${rx.patient_id}')">
+            💊 Dispense
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    showErr('queue-err', `❌ Network error: ${e.message}`);
+  } finally {
+    hideLoading('queue-loading');
+    if (manual) btn.disabled = false;
+  }
+}
+
+// ── Dispense ──
+async function dispense(rxId, medicineName, patientId) {
+  const btn = document.getElementById(`btn-d-${rxId}`);
+  const item = document.getElementById(`rx-${rxId}`);
+
+  if (btn) btn.disabled = true;
+  if (item) item.classList.add('dispensing');
+
+  document.getElementById('dispense-empty').style.display = 'none';
+  showLoading('dispense-loading');
+  hideErr('dispense-err');
+
+  const resultEl = document.getElementById('dispense-result');
+  resultEl.classList.remove('show');
+
+  try {
+    const res = await fetch(`${API}/pharmacy/dispense`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prescription_id: rxId }),
+    });
+
+    if (!res.ok) {
+      let d = `Server error ${res.status}`;
+      try { d = (await res.json()).detail || d; } catch {}
+      showErr('dispense-err', `❌ ${d}`);
+      if (item) item.classList.remove('dispensing');
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const data = await res.json();
+
+    // Build result HTML
+    let html = `
+      <div class="result-row">
+        <div class="result-label">Status</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
+          <span class="tag tag-green">✅ Dispensed</span>
+          <span class="tag tag-purple">${data.prescription_id}</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="result-row">
+        <div class="result-label">Patient</div>
+        <div class="result-value">${data.patient_id}</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Dispensed Medicine</div>
+        <div class="result-value" style="color:var(--accent); font-size:16px;">${data.dispensed_medicine}</div>
+      </div>
+      <div class="result-row">
+        <div class="result-label">Dosage</div>
+        <div class="result-value">${data.dosage}</div>
+      </div>
+    `;
+
+    if (data.substitution) {
+      html += `
+        <div class="divider"></div>
+        <div class="alert-box alert-warning">
+          <strong>⚡ Drug Substitution</strong><br>
+          "${data.original_medicine}" was out of stock.<br>
+          <strong>Alternative:</strong> ${data.substitution.alternative}<br>
+          <strong>Reason:</strong> ${data.substitution.reason}
+        </div>
+      `;
+    }
+
+    if (data.stock_warning) {
+      html += `
+        <div class="alert-box alert-danger">
+          ${data.stock_warning}
+        </div>
+      `;
+      // Refresh inventory to reflect new quantity
+      loadInventory();
+    }
+
+    if (data.patient_context) {
+      html += `
+        <div class="divider"></div>
+        <div class="result-row">
+          <div class="result-label">Patient Memory Context</div>
+          <div class="memory-preview">${data.patient_context}</div>
+        </div>
+      `;
+    }
+
+    resultEl.innerHTML = html;
+    resultEl.classList.add('show');
+
+    // Mark item as done and refresh queue
+    if (item) {
+      item.classList.remove('dispensing');
+      item.classList.add('done');
+      setTimeout(() => {
+        item.style.transition = 'all 0.4s';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(30px)';
+        setTimeout(() => loadPending(), 400);
+      }, 1200);
+    }
+
+  } catch(e) {
+    showErr('dispense-err', `❌ Network error: ${e.message}`);
+    if (item) item.classList.remove('dispensing');
+    if (btn) btn.disabled = false;
+  } finally {
+    hideLoading('dispense-loading');
+  }
+}
+
+// ── Load Inventory ──
+async function loadInventory() {
+  hideErr('inv-err');
+  showLoading('inv-loading');
+
+  try {
+    const res = await fetch(`${API}/inventory`);
+    if (!res.ok) {
+      let d = `Server error ${res.status}`;
+      try { d = (await res.json()).detail || d; } catch {}
+      showErr('inv-err', `❌ ${d}`);
+      return;
+    }
+    const data = await res.json();
+    const items = data.inventory || [];
+
+    // Sort: low stock first
+    items.sort((a, b) => {
+      const aLow = a.quantity <= a.reorder_threshold;
+      const bLow = b.quantity <= b.reorder_threshold;
+      if (aLow && !bLow) return -1;
+      if (!aLow && bLow) return 1;
+      return a.quantity - b.quantity;
+    });
+
+    document.getElementById('inv-list').innerHTML = items.map(m => {
+      const low = m.quantity <= m.reorder_threshold;
+      return `
+        <div class="inv-item ${low ? 'low' : ''}">
+          <div>
+            <div class="inv-name">${m.medicine_name}</div>
+            <div class="inv-meta">Threshold: ${m.reorder_threshold}</div>
+          </div>
+          <div>
+            <div class="inv-qty ${low ? 'low' : 'ok'}">${m.quantity}</div>
+            <div class="inv-badge ${low ? 'low' : 'ok'}">${low ? '⚠️ Low' : '✅ OK'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    showErr('inv-err', `❌ ${e.message}`);
+  } finally {
+    hideLoading('inv-loading');
+  }
+}
+
+// ── Auto-refresh countdown ──
+function resetCountdown() {
+  countdownVal = 15;
+  document.getElementById('countdown').textContent = `${countdownVal}s`;
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    countdownVal--;
+    document.getElementById('countdown').textContent = `${countdownVal}s`;
+    if (countdownVal <= 0) {
+      loadPending();
+      resetCountdown();
+    }
+  }, 1000);
+}
+
+// ── Boot ──
+loadPending();
+loadInventory();
+resetCountdown();
+startCountdown();
+</script>
+</body>
+</html>

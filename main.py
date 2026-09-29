@@ -186,6 +186,16 @@ async def serve_frontend():
     return FileResponse(str(STATIC_DIR / "index.html"))
 
 
+@app.get("/doctor")
+async def serve_doctor():
+    return FileResponse(str(STATIC_DIR / "doctor.html"))
+
+
+@app.get("/pharmacy")
+async def serve_pharmacy():
+    return FileResponse(str(STATIC_DIR / "pharmacy.html"))
+
+
 # ── Pydantic models ────────────────────────────────────────────────────────
 class VisitRequest(BaseModel):
     patient_id: str
