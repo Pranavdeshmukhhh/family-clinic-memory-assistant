@@ -87,14 +87,116 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM inventory")
     if cur.fetchone()[0] == 0:
         seed_meds = [
-            ("Metformin 500mg", 50, 10),
-            ("Amoxicillin 250mg", 30, 8),
-            ("Paracetamol 500mg", 100, 15),
-            ("Omeprazole 20mg", 40, 10),
-            ("Cetirizine 10mg", 60, 12),
-            ("Atorvastatin 10mg", 25, 5),
-            ("Ibuprofen 400mg", 45, 10),
-            ("Lisinopril 5mg", 3, 5),  # intentionally low — test restock
+            # ── Fever / Pain / Anti-inflammatory ──
+            ("Paracetamol 500mg",         100, 20),
+            ("Paracetamol 650mg",          80, 15),
+            ("Ibuprofen 400mg",            60, 12),
+            ("Ibuprofen 600mg",            45, 10),
+            ("Aspirin 75mg",               70, 15),
+            ("Aspirin 325mg",              40, 10),
+            ("Diclofenac 50mg",            35, 8),
+            ("Naproxen 250mg",             30, 8),
+            ("Nimesulide 100mg",           25, 6),
+            ("Mefenamic Acid 250mg",       20, 5),
+            ("Tramadol 50mg",              15, 4),
+            ("Ketorolac 10mg",             10, 3),
+            ("Metamizole 500mg",           18, 5),
+            ("Dexamethasone 4mg",          22, 5),
+            ("Methylprednisolone 4mg",     18, 5),
+            # ── Cold / Cough / Allergy / Respiratory ──
+            ("Cetirizine 10mg",            60, 12),
+            ("Loratadine 10mg",            55, 10),
+            ("Fexofenadine 120mg",         40, 8),
+            ("Levocetirizine 5mg",         45, 10),
+            ("Chlorpheniramine 4mg",       50, 10),
+            ("Dextromethorphan 15mg",      35, 8),
+            ("Guaifenesin 100mg",          40, 8),
+            ("Ambroxol 30mg",              50, 10),
+            ("Bromhexine 8mg",             45, 10),
+            ("Salbutamol 4mg",             30, 8),
+            ("Montelukast 10mg",           25, 6),
+            ("Diphenhydramine 25mg",       30, 8),
+            ("Pseudoephedrine 60mg",       20, 5),
+            ("Budesonide 200mcg",          15, 4),
+            ("Ipratropium 20mcg",          10, 3),
+            # ── Antibiotics ──
+            ("Amoxicillin 500mg",          40, 10),
+            ("Amoxicillin 250mg",          30, 8),
+            ("Amoxicillin+Clavulanate 625mg", 25, 6),
+            ("Azithromycin 500mg",         30, 8),
+            ("Ciprofloxacin 500mg",        25, 6),
+            ("Doxycycline 100mg",          20, 5),
+            ("Metronidazole 400mg",        35, 8),
+            ("Cefixime 200mg",             20, 5),
+            ("Cephalexin 500mg",           18, 5),
+            ("Co-trimoxazole 480mg",       15, 4),
+            ("Erythromycin 500mg",         15, 4),
+            ("Clindamycin 300mg",          12, 3),
+            ("Levofloxacin 500mg",         18, 5),
+            ("Nitrofurantoin 100mg",       12, 3),
+            ("Clarithromycin 500mg",       10, 3),
+            # ── Diabetes ──
+            ("Metformin 500mg",            50, 10),
+            ("Metformin 1000mg",           40, 8),
+            ("Glibenclamide 5mg",          30, 7),
+            ("Glipizide 5mg",              25, 6),
+            ("Sitagliptin 50mg",           20, 5),
+            ("Voglibose 0.2mg",            15, 4),
+            ("Insulin Regular 100IU/ml",   10, 3),
+            ("Insulin NPH 100IU/ml",        8, 2),
+            ("Empagliflozin 10mg",         12, 3),
+            ("Dapagliflozin 10mg",         10, 3),
+            # ── Blood Pressure / Heart ──
+            ("Lisinopril 5mg",              3, 5),   # low — tests restock
+            ("Lisinopril 10mg",            18, 5),
+            ("Amlodipine 5mg",             35, 8),
+            ("Amlodipine 10mg",            25, 6),
+            ("Atenolol 25mg",              30, 7),
+            ("Atenolol 50mg",              22, 5),
+            ("Enalapril 5mg",              20, 5),
+            ("Losartan 50mg",              25, 6),
+            ("Telmisartan 40mg",           18, 5),
+            ("Hydrochlorothiazide 25mg",   20, 5),
+            ("Furosemide 40mg",            15, 4),
+            ("Spironolactone 25mg",        12, 3),
+            ("Bisoprolol 5mg",             18, 5),
+            # ── GI / Stomach ──
+            ("Omeprazole 20mg",            55, 12),
+            ("Pantoprazole 40mg",          45, 10),
+            ("Ranitidine 150mg",           30, 7),
+            ("Domperidone 10mg",           40, 8),
+            ("Ondansetron 4mg",            25, 6),
+            ("Metoclopramide 10mg",        20, 5),
+            ("Loperamide 2mg",             25, 6),
+            ("ORS Powder",                 60, 15),
+            ("Zinc 20mg",                  40, 10),
+            ("Lactulose 10g",              15, 4),
+            # ── Vitamins / Supplements ──
+            ("Vitamin C 500mg",            80, 15),
+            ("Vitamin D3 60000IU",         30, 7),
+            ("Vitamin B12 500mcg",         40, 8),
+            ("Iron 100mg",                 35, 8),
+            ("Calcium 500mg",              40, 8),
+            ("Folic Acid 5mg",             30, 7),
+            ("Multivitamin Tablet",        50, 10),
+            # ── Thyroid / Hormones ──
+            ("Levothyroxine 25mcg",        20, 5),
+            ("Levothyroxine 50mcg",        18, 5),
+            ("Levothyroxine 100mcg",       12, 3),
+            ("Prednisolone 5mg",           22, 5),
+            ("Hydrocortisone 20mg",        10, 3),
+            # ── Cholesterol ──
+            ("Atorvastatin 10mg",          35, 8),
+            ("Atorvastatin 20mg",          28, 7),
+            ("Rosuvastatin 10mg",          25, 6),
+            # ── Mental Health / Neuro ──
+            ("Alprazolam 0.25mg",          10, 3),
+            ("Sertraline 50mg",            15, 4),
+            # ── Skin ──
+            ("Hydrocortisone Cream 1%",    15, 4),
+            ("Clotrimazole Cream 1%",      12, 3),
+            ("Mupirocin Ointment 2%",      10, 3),
+            ("Betamethasone Cream 0.1%",    8, 2),
         ]
         cur.executemany(
             "INSERT INTO inventory (medicine_name, quantity, reorder_threshold) VALUES (?,?,?)",
@@ -206,6 +308,10 @@ class VisitRequest(BaseModel):
 
 class DispenseRequest(BaseModel):
     prescription_id: str
+
+
+class MedicineQuery(BaseModel):
+    medicine_name: str
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -770,6 +876,125 @@ async def patient_summary(patient_id: str):
 @app.get("/inventory")
 async def get_inventory():
     return {"inventory": _get_inventory_list()}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  MODULE — GET /patients  (list all patients with last prescription)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/patients")
+async def list_patients():
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT
+                p.patient_id,
+                p.medicine_name AS last_medicine,
+                p.dosage        AS last_dosage,
+                p.created_at    AS last_visit,
+                (
+                    SELECT COUNT(*) FROM prescriptions p2
+                    WHERE p2.patient_id = p.patient_id
+                ) AS visit_count
+            FROM prescriptions p
+            WHERE p.created_at = (
+                SELECT MAX(p3.created_at) FROM prescriptions p3
+                WHERE p3.patient_id = p.patient_id
+            )
+            GROUP BY p.patient_id
+            ORDER BY p.created_at DESC
+            LIMIT 50
+        """).fetchall()
+        return {"patients": [dict(r) for r in rows]}
+    finally:
+        conn.close()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  MODULE — POST /medicines/alternatives  (AI + inventory cross-reference)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/medicines/alternatives")
+async def medicine_alternatives(req: MedicineQuery):
+    import json as _json
+    medicine_name = req.medicine_name.strip()
+    if not medicine_name:
+        raise HTTPException(400, "medicine_name is required")
+
+    # ── Ask Groq for therapeutic alternatives ──
+    system_msg = (
+        "You are a clinical pharmacology expert. "
+        "List drug alternatives concisely as a JSON array only."
+    )
+    prompt = (
+        f'The doctor is considering prescribing "{medicine_name}".\n'
+        "List the top 8 therapeutic alternatives (same drug class or same indication), "
+        "including the original medicine itself.\n"
+        'Respond ONLY with a raw JSON array — no markdown, no prose:\n'
+        '[{"name": "Medicine Name Strength", "category": "Drug Class", "indication": "What it treats"}]'
+    )
+
+    raw = _groq_chat(system_msg, prompt)
+
+    try:
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip().lstrip("json").strip()
+        alternatives = _json.loads(cleaned)
+        if not isinstance(alternatives, list):
+            raise ValueError("not a list")
+    except Exception:
+        alternatives = [{"name": medicine_name, "category": "Original", "indication": "As prescribed"}]
+
+    # ── Cross-reference with inventory ──
+    inventory = _get_inventory_list()
+    inv_map = {item["medicine_name"].lower(): item for item in inventory}
+
+    def _find_in_inv(name: str):
+        name_l = name.lower()
+        # Exact match first
+        if name_l in inv_map:
+            return inv_map[name_l]
+        # Partial match — name is substring of inv key or vice versa
+        for key, val in inv_map.items():
+            base_name = name_l.split(" ")[0]   # first word e.g. "paracetamol"
+            if base_name and base_name in key:
+                return val
+        return None
+
+    status_order = {"in_stock": 0, "low_stock": 1, "out_of_stock": 2, "not_stocked": 3}
+    result = []
+    for alt in alternatives:
+        name = alt.get("name", "")
+        matched = _find_in_inv(name)
+        if matched:
+            qty       = matched["quantity"]
+            threshold = matched["reorder_threshold"]
+            if qty > threshold:
+                status = "in_stock"
+            elif qty > 0:
+                status = "low_stock"
+            else:
+                status = "out_of_stock"
+            inv_name = matched["medicine_name"]
+        else:
+            qty, status, inv_name = 0, "not_stocked", None
+
+        result.append({
+            "name":         name,
+            "category":     alt.get("category", ""),
+            "indication":   alt.get("indication", ""),
+            "status":       status,
+            "quantity":     qty,
+            "inventory_name": inv_name,
+        })
+
+    result.sort(key=lambda x: status_order.get(x["status"], 9))
+    log.info("💊 ALTERNATIVES │ medicine=%s │ results=%d", medicine_name, len(result))
+    return {"medicine": medicine_name, "alternatives": result}
 
 
 # ══════════════════════════════════════════════════════════════════════════════

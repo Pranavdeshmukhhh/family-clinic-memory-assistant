@@ -3,465 +3,664 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor's Desk</title>
+  <title>Doctor's Desk — Family Clinic</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Header ── */
-    header {
-      background: #fff;
-      border-bottom: 1px solid #e5e5e5;
-      padding: 0 24px;
-      height: 52px;
+    :root {
+      --bg:      #f4f6f9;
+      --white:   #ffffff;
+      --border:  #e2e6ed;
+      --text:    #1a1d23;
+      --muted:   #6b7280;
+      --blue:    #2563eb;
+      --blue-lt: #eff6ff;
+      --green:   #16a34a;
+      --green-lt:#f0fdf4;
+      --red:     #dc2626;
+      --red-lt:  #fef2f2;
+      --orange:  #d97706;
+      --orange-lt:#fffbeb;
+      --radius:  10px;
+    }
+
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      height: 54px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      padding: 0 20px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    header .left { display: flex; align-items: center; gap: 12px; }
-    header h1 { font-size: 16px; font-weight: 700; }
-    header a { font-size: 13px; color: #666; text-decoration: none; }
-    header a:hover { color: #111; }
-
-    /* ── Page body ── */
-    .page { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
-
-    /* ── Card ── */
-    .card {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 16px;
+    .topbar h1 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex: 1; }
+    .topbar a { font-size: 13px; color: var(--muted); text-decoration: none; }
+    .topbar a:hover { color: var(--text); }
+    .topbar-pill {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 500;
+      padding: 4px 10px;
+      background: var(--green-lt);
+      color: var(--green);
+      border-radius: 100px;
     }
-    .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 14px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-    /* ── Form ── */
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #333; }
-    input[type=text], textarea {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 7px;
-      font-size: 14px;
-      font-family: inherit;
-      background: #fafafa;
-      color: #111;
-      outline: none;
-      margin-bottom: 14px;
-    }
-    input[type=text]:focus, textarea:focus { border-color: #2563eb; background: #fff; }
-    input.err, textarea.err { border-color: #dc2626; }
-    textarea { resize: vertical; min-height: 72px; }
-
-    .err-msg { font-size: 12px; color: #dc2626; margin-top: -11px; margin-bottom: 12px; display: none; }
-    .err-msg.show { display: block; }
-
-    /* ── Memory toggle ── */
-    .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .toggle-label { font-size: 14px; color: #333; }
-    .switch { position: relative; width: 42px; height: 24px; cursor: pointer; }
-    .switch input { display: none; }
-    .switch .track {
-      position: absolute; inset: 0;
-      background: #d1d5db; border-radius: 24px; transition: background 0.2s;
-    }
-    .switch .thumb {
-      position: absolute;
-      width: 18px; height: 18px;
-      background: #fff; border-radius: 50%;
-      top: 3px; left: 3px;
-      transition: transform 0.2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-    }
-    .switch input:checked ~ .track { background: #2563eb; }
-    .switch input:checked ~ .thumb { transform: translateX(18px); }
-
-    /* ── Buttons ── */
-    .btn-row { display: flex; gap: 8px; }
-    .btn {
+    /* ── Patient strip ── */
+    .patient-strip {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
       padding: 10px 20px;
-      border-radius: 7px;
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity 0.15s;
     }
-    .btn:hover { opacity: 0.85; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-outline { background: #fff; color: #2563eb; border: 1px solid #2563eb; }
-
-    /* ── Warning ── */
-    .warning {
-      display: none;
-      background: #fef2f2;
-      border: 1px solid #fca5a5;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 13px;
-      color: #b91c1c;
-      margin-bottom: 16px;
+    .strip-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; }
+    .strip-row {
+      display: flex;
       gap: 8px;
-      align-items: flex-start;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
-    .warning.show { display: flex; }
-    .warning strong { display: block; margin-bottom: 2px; }
 
-    /* ── Result ── */
-    .result { display: none; }
-    .result.show { display: block; }
-
-    .result-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    @media(max-width: 500px) { .result-grid { grid-template-columns: 1fr; } }
-
-    .field { }
-    .field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 3px; }
-    .field-value { font-size: 14px; font-weight: 600; color: #111; }
-    .field-value.big { font-size: 17px; color: #2563eb; }
-
-    .memory-box {
-      background: #f5f5f5;
-      border-radius: 7px;
+    .pt-card {
+      min-width: 160px;
+      max-width: 160px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
       padding: 10px 12px;
-      font-size: 12px;
-      color: #555;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      max-height: 100px;
+      cursor: pointer;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .pt-card:hover { border-color: var(--blue); background: var(--blue-lt); }
+    .pt-card.selected { border-color: var(--blue); background: var(--blue-lt); }
+
+    .pt-id   { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .pt-med  { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .pt-meta { display: flex; align-items: center; justify-content: space-between; }
+    .pt-visits { font-size: 10px; color: var(--muted); }
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 100px; }
+    .badge-new { background: #fef9c3; color: #854d0e; }
+    .badge-ret { background: var(--green-lt); color: var(--green); }
+
+    .strip-empty { font-size: 13px; color: var(--muted); padding: 4px 0; }
+    .strip-loading { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+
+    /* ── Main layout ── */
+    .layout { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 113px); }
+    @media(max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+    /* ── Left form panel ── */
+    .form-panel {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 20px;
       overflow-y: auto;
     }
 
-    .notice {
-      display: none;
-      background: #f0fdf4;
-      border: 1px solid #86efac;
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
+
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #374151; }
+    input[type=text], textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
       border-radius: 7px;
-      padding: 10px 14px;
       font-size: 13px;
-      color: #166534;
-      margin-bottom: 12px;
-      align-items: center;
-      gap: 8px;
+      font-family: inherit;
+      background: #fafafa;
+      color: var(--text);
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+      margin-bottom: 10px;
     }
-    .notice.show { display: flex; }
-    .notice a { color: #166534; font-weight: 700; margin-left: 6px; }
+    input[type=text]:focus, textarea:focus {
+      border-color: var(--blue);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    input.err, textarea.err { border-color: var(--red); }
+    textarea { resize: vertical; min-height: 72px; }
 
-    /* ── Compare side-by-side ── */
-    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media(max-width: 500px) { .compare-grid { grid-template-columns: 1fr; } }
-    .compare-col { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 8px; padding: 14px; }
-    .compare-col-label { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+    .err-msg { font-size: 11px; color: var(--red); margin-top: -8px; margin-bottom: 8px; display: none; }
+    .err-msg.show { display: block; }
 
-    /* ── Loading ── */
-    .loading { display: none; font-size: 13px; color: #666; padding: 12px 0; align-items: center; gap: 8px; }
-    .loading.show { display: flex; }
-    .spin { width: 14px; height: 14px; border: 2px solid #d1d5db; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Toggle ── */
+    .toggle-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg); border-radius: 8px; margin-bottom: 14px; }
+    .switch { position: relative; width: 38px; height: 22px; cursor: pointer; flex-shrink: 0; }
+    .switch input { display: none; }
+    .switch .track { position: absolute; inset: 0; background: #d1d5db; border-radius: 22px; transition: .2s; }
+    .switch .thumb { position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .switch input:checked ~ .track { background: var(--blue); }
+    .switch input:checked ~ .thumb { transform: translateX(16px); }
+    .toggle-label { font-size: 13px; font-weight: 500; }
 
-    .fetch-err { display: none; font-size: 13px; color: #dc2626; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 7px; padding: 10px 12px; margin-bottom: 12px; }
-    .fetch-err.show { display: block; }
+    /* ── Buttons ── */
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .btn:hover { opacity: .88; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--blue); color: #fff; width: 100%; margin-bottom: 8px; }
+    .btn-secondary { background: var(--bg); border: 1px solid var(--border); color: var(--text); width: 100%; }
 
-    /* ── Risk profile ── */
+    /* ── Right panel ── */
+    .results-panel { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Alerts ── */
+    .alert { border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5; display: none; }
+    .alert.show { display: flex; align-items: flex-start; gap: 10px; }
+    .alert-red    { background: var(--red-lt); border: 1px solid #fca5a5; color: var(--red); }
+    .alert-green  { background: var(--green-lt); border: 1px solid #86efac; color: var(--green); }
+    .alert-orange { background: var(--orange-lt); border: 1px solid #fcd34d; color: var(--orange); }
+
+    /* ── Result card ── */
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .card-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fafafa;
+    }
+    .card-head-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .card-body { padding: 16px; }
+
+    .empty-state { padding: 32px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+    .empty-icon { font-size: 32px; margin-bottom: 8px; opacity: .4; }
+
+    /* ── Result grid ── */
+    .rx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    @media(max-width:560px) { .rx-grid { grid-template-columns: 1fr; } }
+
+    .rx-field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 3px; }
+    .rx-field-value { font-size: 14px; font-weight: 600; }
+    .rx-field-value.big { font-size: 17px; color: var(--blue); }
+    .rx-field-value.small { font-size: 12px; font-weight: 400; color: #4b5563; line-height: 1.5; }
+
+    /* ── Memory box ── */
+    .mem-box { background: var(--bg); border-radius: 7px; padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.6; max-height: 90px; overflow-y: auto; white-space: pre-wrap; }
+
+    /* ── Tag ── */
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+    .tag-blue   { background: var(--blue-lt); color: var(--blue); }
+    .tag-green  { background: var(--green-lt); color: var(--green); }
+    .tag-orange { background: var(--orange-lt); color: var(--orange); }
+
+    /* ── Alternatives panel ── */
+    .alt-card { display: none; }
+    .alt-card.show { display: block; }
+
+    .alt-loading { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 12px 0; }
+    .alt-loading.show { display: flex; }
+
+    .alt-list { display: flex; flex-direction: column; gap: 6px; }
+    .alt-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      gap: 10px;
+      cursor: default;
+    }
+    .alt-item.in_stock   { border-left: 3px solid var(--green); }
+    .alt-item.low_stock  { border-left: 3px solid var(--orange); }
+    .alt-item.out_of_stock { border-left: 3px solid var(--red); opacity:.7; }
+    .alt-item.not_stocked  { border-left: 3px solid #d1d5db; opacity:.55; }
+
+    .alt-info { flex: 1; min-width: 0; }
+    .alt-name { font-weight: 600; margin-bottom: 1px; }
+    .alt-cat  { font-size: 11px; color: var(--muted); }
+
+    .alt-status { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .alt-status.in_stock   { color: var(--green); }
+    .alt-status.low_stock  { color: var(--orange); }
+    .alt-status.out_of_stock { color: var(--red); }
+    .alt-status.not_stocked  { color: var(--muted); }
+
+    .alt-qty { font-size: 11px; font-weight: 400; color: var(--muted); }
+
+    /* ── Compare ── */
+    .cmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:560px) { .cmp-grid { grid-template-columns: 1fr; } }
+    .cmp-col { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .cmp-label { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+
+    /* ── Risk ── */
     .risk-row { display: flex; gap: 8px; margin-bottom: 0; }
     .risk-row input { margin-bottom: 0; flex: 1; }
-    .risk-content { display: none; font-size: 13px; color: #333; line-height: 1.7; white-space: pre-wrap; margin-top: 12px; }
+    .risk-btn { padding: 9px 14px; white-space: nowrap; }
+    .risk-content { display: none; margin-top: 12px; font-size: 13px; color: #374151; line-height: 1.7; white-space: pre-wrap; }
     .risk-content.show { display: block; }
+
+    /* ── Loading / Error ── */
+    .spin { width: 14px; height: 14px; border: 2px solid #d1d5db; border-top-color: var(--blue); border-radius: 50%; animation: spin .6s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading { display: none; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 12px 0; }
+    .loading.show { display: flex; }
+    .fetch-err { display: none; font-size: 13px; color: var(--red); background: var(--red-lt); border: 1px solid #fca5a5; border-radius: 7px; padding: 10px 12px; }
+    .fetch-err.show { display: block; }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="left">
-    <span>🩺</span>
-    <h1>Doctor's Desk</h1>
-  </div>
+<!-- Top bar -->
+<div class="topbar">
+  <h1>🩺 Doctor's Desk</h1>
+  <div class="topbar-pill"><div class="dot"></div> Live</div>
   <a href="/">← Home</a>
-</header>
+</div>
 
-<div class="page">
+<!-- Patient strip -->
+<div class="patient-strip">
+  <div class="strip-label">Recent Patients — click to load</div>
+  <div class="strip-row" id="strip-row">
+    <div class="strip-loading" id="strip-loading"><div class="spin"></div> Loading patients…</div>
+  </div>
+</div>
 
-  <!-- Visit Form -->
-  <div class="card">
-    <div class="card-title">New Patient Visit</div>
+<!-- Main layout -->
+<div class="layout">
 
-    <label for="pid">Patient ID</label>
-    <input type="text" id="pid" value="patient_001" placeholder="e.g. patient_001" oninput="ce('pid','e-pid')">
-    <div class="err-msg" id="e-pid">Patient ID is required.</div>
+  <!-- ── Left: Form ── -->
+  <div class="form-panel">
 
-    <label for="sym">Symptoms</label>
-    <textarea id="sym" placeholder="Describe symptoms..." oninput="ce('sym','e-sym')"></textarea>
-    <div class="err-msg" id="e-sym">Symptoms are required.</div>
-
-    <label for="notes">Doctor Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
-    <textarea id="notes" placeholder="Additional notes, vitals..." rows="2"></textarea>
-
-    <div class="toggle-row">
-      <label class="switch">
-        <input type="checkbox" id="use_mem" checked>
-        <div class="track"></div>
-        <div class="thumb"></div>
-      </label>
-      <span class="toggle-label">Use patient memory (Hindsight)</span>
+    <div class="section">
+      <div class="section-title">Patient</div>
+      <label for="pid">Patient ID</label>
+      <input type="text" id="pid" value="patient_001" placeholder="e.g. patient_001" oninput="ce('pid','e-pid')">
+      <div class="err-msg" id="e-pid">Patient ID is required.</div>
     </div>
 
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btn-submit" onclick="submit()">Submit Visit</button>
-      <button class="btn btn-outline" id="btn-compare" onclick="compare()">Compare Memory Effect</button>
+    <div class="section">
+      <div class="section-title">Visit</div>
+      <label for="sym">Symptoms *</label>
+      <textarea id="sym" placeholder="Describe presenting symptoms…" rows="3" oninput="ce('sym','e-sym')"></textarea>
+      <div class="err-msg" id="e-sym">Please describe symptoms.</div>
+
+      <label for="notes">Doctor Notes <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+      <textarea id="notes" placeholder="Observations, vitals…" rows="2"></textarea>
     </div>
-  </div>
 
-  <!-- Errors -->
-  <div class="fetch-err" id="main-err"></div>
-
-  <!-- Allergy warning -->
-  <div class="warning" id="warning">
-    <span>⚠️</span>
-    <div>
-      <strong>Drug / Allergy Warning</strong>
-      <span id="warn-text"></span>
+    <div class="section">
+      <div class="section-title">Settings</div>
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" id="use_mem" checked>
+          <div class="track"></div>
+          <div class="thumb"></div>
+        </label>
+        <span class="toggle-label">Use Hindsight patient memory</span>
+      </div>
+      <button class="btn btn-primary" id="btn-submit" onclick="doVisit()">Submit Consultation</button>
+      <button class="btn btn-secondary" id="btn-compare" onclick="doCompare()">⚡ Compare Memory Effect</button>
     </div>
+
+    <div class="section" style="margin-bottom:0">
+      <div class="section-title">Risk Profile</div>
+      <div class="risk-row">
+        <input type="text" id="risk-pid" value="patient_001" placeholder="patient_001">
+        <button class="btn btn-secondary risk-btn" id="btn-risk" onclick="loadRisk()">Load</button>
+      </div>
+      <div class="loading" id="risk-loading"><div class="spin"></div> Generating…</div>
+      <div class="fetch-err" id="risk-err"></div>
+      <div class="risk-content" id="risk-content"></div>
+    </div>
+
   </div>
 
-  <!-- Sent to pharmacy notice -->
-  <div class="notice" id="notice">
-    <span>✅</span> Prescription sent to pharmacy queue.
-    <a href="/pharmacy">Open Pharmacy →</a>
-  </div>
+  <!-- ── Right: Results ── -->
+  <div class="results-panel">
 
-  <!-- Single visit result -->
-  <div class="card result" id="result">
-    <div class="card-title" id="result-title">Consultation Result</div>
-    <div class="loading" id="r-loading"><div class="spin"></div> Consulting AI…</div>
-    <div id="r-body">
-      <div class="result-grid">
-        <div class="field">
-          <div class="field-label">Diagnosis</div>
-          <div class="field-value" id="r-diag"></div>
+    <!-- Error -->
+    <div class="fetch-err" id="main-err"></div>
+
+    <!-- Allergy warning -->
+    <div class="alert alert-red" id="warning">
+      <span style="font-size:18px;">⚠️</span>
+      <div><strong>Drug / Allergy Warning</strong><br><span id="warn-txt"></span></div>
+    </div>
+
+    <!-- Sent to pharmacy notice -->
+    <div class="alert alert-green" id="rx-notice">
+      <span>✅</span>
+      <div>Prescription sent to pharmacy queue. <a href="/pharmacy" style="color:var(--green);font-weight:700;">Open Pharmacy →</a></div>
+    </div>
+
+    <!-- Consultation result -->
+    <div class="card" id="result-card">
+      <div class="card-head">
+        <div class="card-head-title">📋 Consultation Result</div>
+        <div id="result-tags"></div>
+      </div>
+      <div class="card-body">
+        <div class="empty-state" id="r-empty"><div class="empty-icon">🩺</div>Fill in symptoms and submit a consultation.</div>
+        <div class="loading" id="r-loading"><div class="spin"></div> Consulting AI with patient history…</div>
+        <div id="r-body" style="display:none;">
+          <div class="rx-grid">
+            <div>
+              <div class="rx-field-label">Diagnosis</div>
+              <div class="rx-field-value" id="r-diag"></div>
+            </div>
+            <div>
+              <div class="rx-field-label">Prescription</div>
+              <div class="rx-field-value big" id="r-med"></div>
+            </div>
+            <div>
+              <div class="rx-field-label">Dosage</div>
+              <div class="rx-field-value" id="r-dose"></div>
+            </div>
+            <div>
+              <div class="rx-field-label">Instructions</div>
+              <div class="rx-field-value small" id="r-inst"></div>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="rx-field-label" style="margin-bottom:4px;">AI Reasoning</div>
+            <div class="rx-field-value small" id="r-reason"></div>
+          </div>
+          <div>
+            <div class="rx-field-label" style="margin-bottom:4px;">Memory Context Used</div>
+            <div class="mem-box" id="r-mem"></div>
+          </div>
         </div>
-        <div class="field">
-          <div class="field-label">Prescription</div>
-          <div class="field-value big" id="r-med"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">Dosage</div>
-          <div class="field-value" id="r-dose"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">Instructions</div>
-          <div class="field-value" id="r-inst" style="font-size:13px;font-weight:400;color:#444;"></div>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:10px;">
-        <div class="field-label">AI Reasoning</div>
-        <div class="field-value" id="r-reason" style="font-size:13px;font-weight:400;color:#444;"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Memory Used</div>
-        <div class="memory-box" id="r-mem"></div>
       </div>
     </div>
-  </div>
 
-  <!-- Compare result -->
-  <div class="card result" id="compare-result">
-    <div class="card-title">Memory Effect Comparison</div>
-    <div class="loading" id="c-loading"><div class="spin"></div> Running both consultations…</div>
-    <div class="compare-grid" id="c-body" style="display:none;">
-      <div class="compare-col">
-        <div class="compare-col-label" style="color:#2563eb;">🧠 With Memory</div>
-        <div id="c-with"></div>
+    <!-- Medicine Alternatives panel (appears after result) -->
+    <div class="card alt-card" id="alt-card">
+      <div class="card-head">
+        <div class="card-head-title">💊 Medicine Alternatives — ranked by your stock</div>
+        <div class="tag tag-blue" id="alt-medicine-tag"></div>
       </div>
-      <div class="compare-col">
-        <div class="compare-col-label" style="color:#d97706;">🚫 Without Memory</div>
-        <div id="c-without"></div>
+      <div class="card-body">
+        <div class="alt-loading" id="alt-loading"><div class="spin"></div> Fetching AI alternatives &amp; checking stock…</div>
+        <div class="fetch-err" id="alt-err"></div>
+        <div class="alt-list" id="alt-list"></div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+          ✅ In stock &nbsp;·&nbsp; ⚠️ Low stock &nbsp;·&nbsp; ❌ Out of stock &nbsp;·&nbsp; — Not in our pharmacy
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Risk Profile -->
-  <div class="card">
-    <div class="card-title">Patient Risk Profile</div>
-    <div class="risk-row">
-      <input type="text" id="risk-pid" value="patient_001" placeholder="patient_001">
-      <button class="btn btn-outline" id="btn-risk" onclick="loadRisk()">Load</button>
+    <!-- Compare result -->
+    <div class="card" id="cmp-card" style="display:none;">
+      <div class="card-head">
+        <div class="card-head-title">⚡ Memory Comparison</div>
+      </div>
+      <div class="card-body">
+        <div class="loading" id="cmp-loading"><div class="spin"></div> Running both consultations…</div>
+        <div class="cmp-grid" id="cmp-body" style="display:none;">
+          <div class="cmp-col">
+            <div class="cmp-label" style="color:var(--blue);">🧠 With Memory</div>
+            <div id="cmp-with"></div>
+          </div>
+          <div class="cmp-col">
+            <div class="cmp-label" style="color:var(--orange);">🚫 Without Memory</div>
+            <div id="cmp-without"></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="loading" id="risk-loading" style="margin-top:10px;"><div class="spin"></div> Loading…</div>
-    <div class="fetch-err" id="risk-err" style="margin-top:10px;"></div>
-    <div class="risk-content" id="risk-content"></div>
-  </div>
 
+  </div>
 </div>
 
 <script>
 const API = '';
 
-function ce(iid, eid) {
-  document.getElementById(iid).classList.remove('err');
-  document.getElementById(eid).classList.remove('show');
-}
-function err(id, msg) { const e = document.getElementById(id); e.textContent = msg; e.classList.add('show'); }
-function clearErr(id) { document.getElementById(id).classList.remove('show'); }
-function show(id) { document.getElementById(id).classList.add('show'); }
-function hide(id) { document.getElementById(id).classList.remove('show'); }
-
-function validate() {
-  let ok = true;
-  const pid = document.getElementById('pid').value.trim();
-  const sym = document.getElementById('sym').value.trim();
-  if (!pid) { document.getElementById('pid').classList.add('err'); show('e-pid'); ok = false; }
-  if (!sym) { document.getElementById('sym').classList.add('err'); show('e-sym'); ok = false; }
-  return ok;
-}
-
-function lock(on) {
+/* ── Util ── */
+function ce(ii,ei){ document.getElementById(ii).classList.remove('err'); document.getElementById(ei).classList.remove('show'); }
+function showErr(id,m){ const e=document.getElementById(id); e.textContent=m; e.classList.add('show'); }
+function hideErr(id){ document.getElementById(id).classList.remove('show'); }
+function showLoad(id){ document.getElementById(id).classList.add('show'); }
+function hideLoad(id){ document.getElementById(id).classList.remove('show'); }
+function showEl(id){ document.getElementById(id).classList.add('show'); }
+function hideEl(id){ document.getElementById(id).classList.remove('show'); }
+function lock(on){
   document.getElementById('btn-submit').disabled = on;
   document.getElementById('btn-compare').disabled = on;
 }
-
-function payload(use_memory) {
+function validate(){
+  let ok=true;
+  if(!document.getElementById('pid').value.trim()){ document.getElementById('pid').classList.add('err'); showEl('e-pid'); ok=false; }
+  if(!document.getElementById('sym').value.trim()){ document.getElementById('sym').classList.add('err'); showEl('e-sym'); ok=false; }
+  return ok;
+}
+function payload(mem){
   return {
     patient_id: document.getElementById('pid').value.trim(),
-    symptoms: document.getElementById('sym').value.trim(),
-    notes: document.getElementById('notes').value.trim(),
-    use_memory,
+    symptoms:   document.getElementById('sym').value.trim(),
+    notes:      document.getElementById('notes').value.trim(),
+    use_memory: mem,
   };
 }
 
-async function submit() {
-  if (!validate()) return;
-  clearErr('main-err');
-  hide('warning'); hide('notice');
-  document.getElementById('result').classList.add('show');
-  document.getElementById('compare-result').classList.remove('show');
+/* ── Patient strip ── */
+async function loadStrip(){
+  try {
+    const res = await fetch(`${API}/patients`);
+    if(!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const pts = data.patients || [];
+
+    hideLoad('strip-loading');
+    const row = document.getElementById('strip-row');
+    if(pts.length === 0){
+      row.innerHTML = '<span class="strip-empty">No patient history yet. Submit a consultation to begin.</span>';
+      return;
+    }
+    row.innerHTML = pts.map(p => {
+      const isNew = p.visit_count <= 1;
+      const dt = p.last_visit ? new Date(p.last_visit).toLocaleDateString() : '—';
+      return `<div class="pt-card" onclick="selectPatient('${p.patient_id}')">
+        <div class="pt-id">${p.patient_id}</div>
+        <div class="pt-med">💊 ${p.last_medicine || 'No Rx yet'}</div>
+        <div class="pt-meta">
+          <span class="pt-visits">${p.visit_count} visit${p.visit_count!==1?'s':''} · ${dt}</span>
+          <span class="badge ${isNew?'badge-new':'badge-ret'}">${isNew?'New':'Returning'}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('strip-loading').innerHTML = `<span style="color:var(--muted);font-size:13px;">Could not load patients</span>`;
+  }
+}
+
+function selectPatient(pid){
+  document.getElementById('pid').value = pid;
+  document.getElementById('risk-pid').value = pid;
+  document.querySelectorAll('.pt-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+/* ── Visit ── */
+async function doVisit(){
+  if(!validate()) return;
+  hideErr('main-err');
+  hideEl('warning'); hideEl('rx-notice');
+  document.getElementById('cmp-card').style.display = 'none';
+
+  // Show result card with loading
+  document.getElementById('r-empty').style.display = 'none';
   document.getElementById('r-body').style.display = 'none';
-  document.getElementById('r-loading').classList.add('show');
+  showLoad('r-loading');
+  document.getElementById('alt-card').classList.remove('show');
   lock(true);
 
   try {
     const res = await fetch(`${API}/doctor/visit`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload(document.getElementById('use_mem').checked)),
     });
-    if (!res.ok) {
-      let d = `Error ${res.status}`;
-      try { d = (await res.json()).detail || d; } catch {}
-      err('main-err', `❌ ${d}`);
-      document.getElementById('result').classList.remove('show');
-      return;
+    if(!res.ok){
+      let d=`Error ${res.status}`; try{d=(await res.json()).detail||d;}catch{}
+      showErr('main-err',`❌ ${d}`); return;
     }
     const d = await res.json();
     fillResult(d);
-    if (d.warning) { document.getElementById('warn-text').textContent = d.warning; show('warning'); }
-    show('notice');
-    setTimeout(() => hide('notice'), 10000);
-  } catch(e) {
-    err('main-err', `❌ ${e.message}`);
-    document.getElementById('result').classList.remove('show');
+    if(d.warning){ document.getElementById('warn-txt').textContent=d.warning; showEl('warning'); }
+    showEl('rx-notice');
+    setTimeout(()=>hideEl('rx-notice'), 10000);
+
+    // Trigger alternatives
+    loadAlternatives(d.prescription.medicine_name);
+    // Refresh patient strip
+    loadStrip();
+  } catch(e){
+    showErr('main-err',`❌ ${e.message}`);
   } finally {
-    document.getElementById('r-loading').classList.remove('show');
-    document.getElementById('r-body').style.display = 'block';
+    hideLoad('r-loading');
     lock(false);
   }
 }
 
-function fillResult(d) {
-  document.getElementById('r-diag').textContent = d.ai_diagnosis || '—';
-  document.getElementById('r-med').textContent  = d.prescription.medicine_name || '—';
-  document.getElementById('r-dose').textContent = d.prescription.dosage || '—';
-  document.getElementById('r-inst').textContent = d.prescription.notes || '—';
-  document.getElementById('r-reason').textContent = d.ai_reasoning || '—';
-  document.getElementById('r-mem').textContent  = d.memory_used || 'No memory retrieved';
-  document.getElementById('result-title').textContent =
-    `Consultation Result — Rx #${d.prescription.prescription_id}`;
+function fillResult(d){
+  document.getElementById('r-diag').textContent  = d.ai_diagnosis||'—';
+  document.getElementById('r-med').textContent   = d.prescription.medicine_name||'—';
+  document.getElementById('r-dose').textContent  = d.prescription.dosage||'—';
+  document.getElementById('r-inst').textContent  = d.prescription.notes||'—';
+  document.getElementById('r-reason').textContent= d.ai_reasoning||'—';
+  document.getElementById('r-mem').textContent   = d.memory_used||'No memory retrieved';
+
+  const tags = document.getElementById('result-tags');
+  tags.innerHTML = [
+    d.use_memory ? '<span class="tag tag-blue">🧠 Memory</span>' : '<span class="tag tag-orange">No Memory</span>',
+    `<span class="tag tag-green">Rx #${d.prescription.prescription_id}</span>`,
+    d.is_new_patient ? '<span class="tag tag-orange">New Patient</span>' : '',
+  ].join(' ');
+
+  document.getElementById('r-body').style.display = 'block';
 }
 
-function fillCompare(el, d) {
-  el.innerHTML = `
-    <div class="field" style="margin-bottom:8px;">
-      <div class="field-label">Diagnosis</div>
-      <div style="font-size:13px;font-weight:600;">${d.ai_diagnosis||'—'}</div>
-    </div>
-    <div class="field" style="margin-bottom:8px;">
-      <div class="field-label">Prescribed</div>
-      <div style="font-size:15px;font-weight:700;color:#2563eb;">${d.prescription.medicine_name} — ${d.prescription.dosage}</div>
-    </div>
-    <div class="field">
-      <div class="field-label">Memory Used</div>
-      <div class="memory-box" style="max-height:80px;">${d.memory_used||'None'}</div>
-    </div>`;
+/* ── Alternatives ── */
+async function loadAlternatives(medicine){
+  const card = document.getElementById('alt-card');
+  card.classList.add('show');
+  document.getElementById('alt-medicine-tag').textContent = medicine;
+  showLoad('alt-loading');
+  hideErr('alt-err');
+  document.getElementById('alt-list').innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}/medicines/alternatives`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({medicine_name: medicine}),
+    });
+    if(!res.ok){ throw new Error(`Server ${res.status}`); }
+    const data = await res.json();
+    renderAlternatives(data.alternatives||[]);
+  } catch(e){
+    showErr('alt-err', `❌ ${e.message}`);
+  } finally {
+    hideLoad('alt-loading');
+  }
 }
 
-async function compare() {
-  if (!validate()) return;
-  clearErr('main-err');
-  hide('warning'); hide('notice');
-  document.getElementById('result').classList.remove('show');
-  document.getElementById('compare-result').classList.add('show');
-  document.getElementById('c-body').style.display = 'none';
-  document.getElementById('c-loading').classList.add('show');
+function renderAlternatives(list){
+  const icons = { in_stock:'✅', low_stock:'⚠️', out_of_stock:'❌', not_stocked:'—' };
+  const labels = { in_stock:'In Stock', low_stock:'Low Stock', out_of_stock:'Out of Stock', not_stocked:'Not Stocked' };
+
+  document.getElementById('alt-list').innerHTML = list.map(a => `
+    <div class="alt-item ${a.status}">
+      <div class="alt-info">
+        <div class="alt-name">${a.name}</div>
+        <div class="alt-cat">${a.category}${a.indication?' · '+a.indication:''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="alt-status ${a.status}">${icons[a.status]} ${labels[a.status]}</div>
+        ${a.quantity>0?`<div class="alt-qty">Qty: ${a.quantity}${a.inventory_name&&a.inventory_name!==a.name?'<br><small>'+a.inventory_name+'</small>':''}</div>`:''}
+      </div>
+    </div>
+  `).join('') || '<div style="font-size:13px;color:var(--muted);">No alternatives found.</div>';
+}
+
+/* ── Compare ── */
+async function doCompare(){
+  if(!validate()) return;
+  hideErr('main-err'); hideEl('warning');
+  document.getElementById('r-empty').style.display = 'none';
+  document.getElementById('r-body').style.display = 'none';
+  document.getElementById('alt-card').classList.remove('show');
+
+  const cmpCard = document.getElementById('cmp-card');
+  cmpCard.style.display = 'block';
+  document.getElementById('cmp-body').style.display = 'none';
+  showLoad('cmp-loading');
   lock(true);
 
   try {
     const [rA, rB] = await Promise.all([
-      fetch(`${API}/doctor/visit`, { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({...payload(true)}) }),
-      fetch(`${API}/doctor/visit`, { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({...payload(false)}) }),
+      fetch(`${API}/doctor/visit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(true)})}),
+      fetch(`${API}/doctor/visit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(false)})}),
     ]);
-    if (!rA.ok || !rB.ok) {
-      err('main-err', `❌ Server error`);
-      document.getElementById('compare-result').classList.remove('show');
-      return;
-    }
-    const [dA, dB] = await Promise.all([rA.json(), rB.json()]);
-    fillCompare(document.getElementById('c-with'), dA);
-    fillCompare(document.getElementById('c-without'), dB);
-    document.getElementById('c-body').style.display = 'grid';
-    if (dA.warning) { document.getElementById('warn-text').textContent = dA.warning; show('warning'); }
-  } catch(e) {
-    err('main-err', `❌ ${e.message}`);
-    document.getElementById('compare-result').classList.remove('show');
+    if(!rA.ok||!rB.ok){ showErr('main-err','❌ Server error'); cmpCard.style.display='none'; return; }
+    const [dA,dB] = await Promise.all([rA.json(),rB.json()]);
+    document.getElementById('cmp-with').innerHTML    = formatCmp(dA);
+    document.getElementById('cmp-without').innerHTML = formatCmp(dB);
+    document.getElementById('cmp-body').style.display = 'grid';
+    if(dA.warning){ document.getElementById('warn-txt').textContent=dA.warning; showEl('warning'); }
+    loadStrip();
+  } catch(e){
+    showErr('main-err',`❌ ${e.message}`); cmpCard.style.display='none';
   } finally {
-    document.getElementById('c-loading').classList.remove('show');
-    lock(false);
+    hideLoad('cmp-loading'); lock(false);
   }
 }
 
-async function loadRisk() {
+function formatCmp(d){
+  return `
+    <div style="margin-bottom:8px;">
+      <div class="rx-field-label">Diagnosis</div>
+      <div style="font-size:13px;font-weight:600;">${d.ai_diagnosis||'—'}</div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div class="rx-field-label">Prescribed</div>
+      <div style="font-size:15px;font-weight:700;color:var(--blue);">${d.prescription.medicine_name} — ${d.prescription.dosage}</div>
+    </div>
+    <div>
+      <div class="rx-field-label" style="margin-bottom:3px;">Memory Used</div>
+      <div class="mem-box" style="max-height:70px;">${d.memory_used||'None'}</div>
+    </div>`;
+}
+
+/* ── Risk ── */
+async function loadRisk(){
   const pid = document.getElementById('risk-pid').value.trim();
-  if (!pid) return;
+  if(!pid) return;
   const btn = document.getElementById('btn-risk');
   btn.disabled = true;
-  clearErr('risk-err');
+  hideErr('risk-err');
   document.getElementById('risk-content').classList.remove('show');
-  document.getElementById('risk-loading').classList.add('show');
+  showLoad('risk-loading');
 
   try {
     const res = await fetch(`${API}/patient/${pid}/summary`);
-    if (!res.ok) {
-      let d = res.status === 404 ? `No history found for "${pid}"` : `Error ${res.status}`;
-      try { d = (await res.json()).detail || d; } catch {}
-      err('risk-err', d);
-      return;
+    if(!res.ok){
+      let d = res.status===404?`No history found for "${pid}"`:`Error ${res.status}`;
+      try{d=(await res.json()).detail||d;}catch{}
+      showErr('risk-err',d); return;
     }
     const data = await res.json();
     document.getElementById('risk-content').textContent = data.summary;
     document.getElementById('risk-content').classList.add('show');
-  } catch(e) {
-    err('risk-err', `❌ ${e.message}`);
+  } catch(e){
+    showErr('risk-err',`❌ ${e.message}`);
   } finally {
-    document.getElementById('risk-loading').classList.remove('show');
-    btn.disabled = false;
+    hideLoad('risk-loading'); btn.disabled=false;
   }
 }
+
+/* ── Boot ── */
+loadStrip();
 </script>
 </body>
 </html>
