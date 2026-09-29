@@ -278,6 +278,25 @@
       <label for="pid">Patient ID</label>
       <input type="text" id="pid" value="patient_001" placeholder="e.g. patient_001" oninput="ce('pid','e-pid')">
       <div class="err-msg" id="e-pid">Patient ID is required.</div>
+
+      <!-- Demo patients note -->
+      <div id="demo-note" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;padding:10px 12px;margin-top:-4px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#0369a1;margin-bottom:7px;">Demo Patients</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div class="demo-row" onclick="setDemoPatient('patient_001')" style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;padding:5px 6px;border-radius:5px;transition:background .12s;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background=''">
+            <span style="font-size:11px;font-weight:700;color:#0369a1;white-space:nowrap;min-width:86px;">patient_001</span>
+            <span style="font-size:11px;color:#374151;line-height:1.4;">Rajesh Kumar, 54 — diabetes + <strong>penicillin allergy</strong>. Has 2 visit memories. Tests allergy conflict detection.</span>
+          </div>
+          <div class="demo-row" onclick="setDemoPatient('patient_002')" style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;padding:5px 6px;border-radius:5px;transition:background .12s;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background=''">
+            <span style="font-size:11px;font-weight:700;color:#0369a1;white-space:nowrap;min-width:86px;">patient_002</span>
+            <span style="font-size:11px;color:#374151;line-height:1.4;">Meera Iyer, 29 — Stage 1 hypertension on Lisinopril. Tests returning-patient memory recall.</span>
+          </div>
+          <div class="demo-row" onclick="setDemoPatient('patient_003')" style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;padding:5px 6px;border-radius:5px;transition:background .12s;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background=''">
+            <span style="font-size:11px;font-weight:700;color:#0369a1;white-space:nowrap;min-width:86px;">patient_003</span>
+            <span style="font-size:11px;color:#374151;line-height:1.4;">No prior history — demos first-visit / new-patient flow.</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -442,6 +461,14 @@ function payload(mem){
     notes:      document.getElementById('notes').value.trim(),
     use_memory: mem,
   };
+}
+function setDemoPatient(id){
+  const el = document.getElementById('pid');
+  el.value = id;
+  el.classList.remove('err');
+  document.getElementById('e-pid').classList.remove('show');
+  // Also sync the risk-profile field
+  document.getElementById('risk-pid').value = id;
 }
 
 /* ── Patient strip ── */
