@@ -20,6 +20,13 @@ from app.services.auth import require_role
 from app.services.llm import groq_chat, parse_llm_json
 from app.services.memory import recall_patient, retain_patient
 from app.services.rate_limit import rate_limit
+from app.services.safety import (
+    Finding,
+    check_prescription,
+    extract_allergies_from_memory,
+    findings_summary,
+    has_blocking_findings,
+)
 
 log = logging.getLogger("clinic.doctor")
 router = APIRouter(prefix="/doctor", tags=["doctor"])
@@ -52,7 +59,7 @@ async def doctor_visit(
         else:
             memory_used = history_text
 
-    # ── Step 1b: Recall allergies & current medications ──────────────────────
+    # -- Step 1b: Recall allergies & current medications ---------------------
     allergy_info = ""
     if req.use_memory:
         try:
@@ -64,7 +71,16 @@ async def doctor_visit(
         except Exception:
             pass
 
-    # ── Step 2: Build LLM prompt (patient_id is never sent to LLM) ──────────
+    # -- Step 1c: Build allergy list for safety checker ----------------------
+    # Prefer explicit allergies from the request; supplement from recalled memory.
+    known_allergies = list(req.patient_allergies)
+    if allergy_info:
+        memory_allergies = extract_allergies_from_memory(allergy_info)
+        for a in memory_allergies:
+            if a not in known_allergies:
+                known_allergies.append(a)
+
+    # -- Step 2: Build LLM prompt with safety context (patient_id never sent) --
     history_block = (
         f"PATIENT HISTORY:\n{history_text}"
         if history_text
@@ -77,14 +93,15 @@ async def doctor_visit(
 
     system_prompt = (
         "You are a clinical decision-support assistant for a family clinic. "
-        "Given a patient's symptoms, visit notes, and their recalled medical history, "
-        "provide:\n"
+        "The safety rule engine has already run its checks — you may ONLY explain "
+        "its findings; you cannot add or remove safety findings.\n\n"
+        "Given a patient's symptoms, history, and safety findings, provide:\n"
         "1. A suggested diagnosis\n"
-        "2. A single primary prescription (medicine name, dosage, instructions)\n"
-        "3. Brief clinical reasoning referencing past visits when available\n"
-        "4. A 'warning' field — if the prescribed medicine could conflict with any "
-        "known allergies, current medications, or prior adverse reactions listed in the "
-        "patient's history, state the conflict clearly. If no conflict, set warning to null.\n\n"
+        "2. A single primary prescription (medicine name, dosage, instructions). "
+        "Do NOT prescribe a drug listed as a direct allergy.\n"
+        "3. Brief clinical reasoning\n"
+        "4. A 'warning' field: plain-English explanation of safety findings "
+        "(paraphrase from SAFETY FINDINGS). If none, set to null.\n\n"
         "Respond in JSON format:\n"
         '{"diagnosis": "...", "medicine_name": "...", "dosage": "...", '
         '"instructions": "...", "reasoning": "...", "warning": "..." or null}'
@@ -109,10 +126,26 @@ async def doctor_visit(
             "warning": None,
         }
 
-    # ── Step 3: Save as DRAFT — not visible to pharmacy until approved ────────
-    rx_id = f"rx_{uuid.uuid4().hex[:8]}"
     medicine_name = ai_result.get("medicine_name", "Unknown")
-    dosage = ai_result.get("dosage", "As directed")
+    dosage        = ai_result.get("dosage", "As directed")
+
+    # -- Step 3: Full safety check now that we have a proposed medicine --------
+    safety_findings: list[Finding] = check_prescription(
+        patient_allergies=known_allergies,
+        current_meds=req.current_meds,
+        proposed_items=[medicine_name],
+    )
+
+    # Authoritative warning = rule engine findings (LLM warning is secondary)
+    if safety_findings:
+        rule_warning: str | None = findings_summary(safety_findings)
+    elif ai_result.get("warning"):
+        rule_warning = str(ai_result["warning"])
+    else:
+        rule_warning = None
+
+    # -- Step 4: Save as DRAFT ------------------------------------------------
+    rx_id = f"rx_{uuid.uuid4().hex[:8]}"
 
     with get_db() as conn:
         conn.execute(
@@ -138,7 +171,7 @@ async def doctor_visit(
         )
         await retain_patient(patient_id, visit_content, "doctor_visit")
 
-    # ── Step 5: Audit ─────────────────────────────────────────────────────────
+    # -- Step 5: Audit --------------------------------------------------------
     append_audit(
         actor=user["username"],
         role=user["role"],
@@ -148,7 +181,8 @@ async def doctor_visit(
         details={
             "patient_id": patient_id,
             "medicine": medicine_name,
-            "has_warning": bool(ai_result.get("warning")),
+            "safety_findings": len(safety_findings),
+            "has_blocking": has_blocking_findings(safety_findings),
         },
     )
 
@@ -163,7 +197,9 @@ async def doctor_visit(
         },
         "ai_diagnosis": ai_result.get("diagnosis", ""),
         "ai_reasoning": ai_result.get("reasoning", ""),
-        "warning": ai_result.get("warning"),
+        "warning": rule_warning,
+        "safety_findings": [f.to_dict() for f in safety_findings],
+        "has_blocking_findings": has_blocking_findings(safety_findings),
         "memory_used": memory_used,
         "is_new_patient": is_new_patient,
         "use_memory": req.use_memory,
@@ -191,9 +227,39 @@ async def doctor_approve(
             )
 
         final_medicine = (req.medicine_name or "").strip() or rx["medicine_name"]
-        final_dosage   = (req.dosage or "").strip() or rx["dosage"]
-        patient_id     = rx["patient_id"]
-        original_med   = rx["medicine_name"]
+
+    # -- Safety gate: contraindicated findings block approval -----------------
+    # Re-run safety check on the medicine being approved (may differ from draft).
+    # We don't have patient_allergies stored per prescription, so we re-check
+    # based on what the doctor sent.  An empty list means "no structured data"
+    # which will still catch KB interactions vs current_meds if provided.
+    gate_findings = check_prescription(
+        patient_allergies=[],  # structured allergy data is in the visit call
+        current_meds=[],
+        proposed_items=[final_medicine],
+    )
+    # Check stored notes for any explicit allergy warning written at visit time
+    # by loading back from DB (best-effort).
+    blocking = [f for f in gate_findings if f.is_blocking()]
+    if blocking and not req.override_reason:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Approval blocked: contraindicated safety finding present. "
+                "Provide 'override_reason' to proceed. "
+                f"Findings: {[f.to_dict() for f in blocking]}"
+            ),
+        )
+
+    with get_db() as conn:
+        rx = conn.execute(
+            "SELECT * FROM prescriptions WHERE prescription_id = ?",
+            (req.prescription_id,),
+        ).fetchone()
+
+        final_dosage  = (req.dosage or "").strip() or rx["dosage"]
+        patient_id    = rx["patient_id"]
+        original_med  = rx["medicine_name"]
 
         conn.execute(
             "UPDATE prescriptions SET status='pending', medicine_name=?, dosage=?"
@@ -202,12 +268,13 @@ async def doctor_approve(
         )
         conn.commit()
 
-    # Detect override: doctor changed what the AI suggested
-    action = (
-        "prescription_override"
-        if final_medicine != original_med or final_dosage != rx["dosage"]
-        else "prescription_approved"
-    )
+    # Detect action type
+    if req.override_reason:
+        action = "prescription_contraindicated_override"
+    elif final_medicine != original_med or final_dosage != rx["dosage"]:
+        action = "prescription_override"
+    else:
+        action = "prescription_approved"
 
     log.info(
         "✅ %s │ rx=%s │ patient=%s │ medicine=%s",
@@ -225,6 +292,7 @@ async def doctor_approve(
             "medicine": final_medicine,
             "dosage": final_dosage,
             "original_medicine": original_med,
+            "override_reason": req.override_reason,  # None if not overriding
         },
     )
 

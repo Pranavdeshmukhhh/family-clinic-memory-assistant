@@ -1,0 +1,537 @@
+{
+  "_comment": "Drug knowledge base — ~40 common Indian-market drugs. Each entry lists the pharmacological class, common brand names sold in India, allergen groups (used for cross-reactivity checks), and known pairwise interactions. Strengths are intentionally omitted from keys; normalisation strips them at runtime.",
+
+  "amoxicillin": {
+    "class": "aminopenicillin",
+    "brands": ["Mox", "Novamox", "Amoxil", "Wymox"],
+    "allergen_groups": ["penicillin", "beta_lactam"],
+    "interactions": {
+      "methotrexate": {"severity": "major", "reason": "Amoxicillin reduces methotrexate renal clearance → toxicity risk"},
+      "warfarin":     {"severity": "moderate", "reason": "Amoxicillin may enhance anticoagulant effect of warfarin"},
+      "allopurinol":  {"severity": "moderate", "reason": "Concurrent use increases risk of ampicillin/amoxicillin rash"}
+    }
+  },
+
+  "ampicillin": {
+    "class": "aminopenicillin",
+    "brands": ["Ampicyn", "Biocilin"],
+    "allergen_groups": ["penicillin", "beta_lactam"],
+    "interactions": {
+      "methotrexate": {"severity": "major", "reason": "Ampicillin reduces methotrexate renal clearance → toxicity risk"},
+      "warfarin":     {"severity": "moderate", "reason": "May enhance anticoagulant effect of warfarin"},
+      "allopurinol":  {"severity": "moderate", "reason": "Allopurinol increases rash risk with aminopenicillins"}
+    }
+  },
+
+  "cloxacillin": {
+    "class": "penicillinase_resistant_penicillin",
+    "brands": ["Cloxin", "Klox"],
+    "allergen_groups": ["penicillin", "beta_lactam"],
+    "interactions": {}
+  },
+
+  "cephalexin": {
+    "class": "first_generation_cephalosporin",
+    "brands": ["Sporidex", "Alcef", "Keflex"],
+    "allergen_groups": ["cephalosporin", "beta_lactam"],
+    "interactions": {
+      "metformin": {"severity": "moderate", "reason": "May slightly increase metformin AUC via OCT2 inhibition"}
+    }
+  },
+
+  "cefixime": {
+    "class": "third_generation_cephalosporin",
+    "brands": ["Taxim-O", "Zifi", "Topcef"],
+    "allergen_groups": ["cephalosporin", "beta_lactam"],
+    "interactions": {
+      "warfarin": {"severity": "moderate", "reason": "Cefixime may potentiate warfarin anticoagulation"}
+    }
+  },
+
+  "azithromycin": {
+    "class": "macrolide",
+    "brands": ["Azee", "Zithromax", "Azithral", "Z-Pack"],
+    "allergen_groups": ["macrolide"],
+    "interactions": {
+      "warfarin":      {"severity": "moderate", "reason": "Azithromycin can increase INR in patients on warfarin"},
+      "digoxin":       {"severity": "major",    "reason": "Macrolides increase digoxin absorption → toxicity risk"},
+      "domperidone":   {"severity": "contraindicated", "reason": "Both prolong QTc interval → risk of fatal arrhythmia"},
+      "ondansetron":   {"severity": "contraindicated", "reason": "Both prolong QTc interval → risk of fatal arrhythmia"},
+      "amiodarone":    {"severity": "contraindicated", "reason": "Additive QTc prolongation — avoid combination"},
+      "ciprofloxacin": {"severity": "moderate", "reason": "Both prolong QTc; risk additive though usually manageable with monitoring"}
+    }
+  },
+
+  "clarithromycin": {
+    "class": "macrolide",
+    "brands": ["Claribid", "Klacid", "Biaxin"],
+    "allergen_groups": ["macrolide"],
+    "interactions": {
+      "warfarin":      {"severity": "major",    "reason": "Clarithromycin significantly raises INR via CYP2C9 inhibition"},
+      "digoxin":       {"severity": "major",    "reason": "Macrolides increase digoxin absorption → toxicity"},
+      "domperidone":   {"severity": "contraindicated", "reason": "Both prolong QTc → risk of fatal arrhythmia"},
+      "ondansetron":   {"severity": "contraindicated", "reason": "Both prolong QTc → risk of fatal arrhythmia"},
+      "simvastatin":   {"severity": "contraindicated", "reason": "CYP3A4 inhibition → severe myopathy / rhabdomyolysis"},
+      "atorvastatin":  {"severity": "major",    "reason": "CYP3A4 inhibition raises atorvastatin levels → myopathy risk"}
+    }
+  },
+
+  "erythromycin": {
+    "class": "macrolide",
+    "brands": ["Erythrocin", "Althrocin"],
+    "allergen_groups": ["macrolide"],
+    "interactions": {
+      "warfarin":    {"severity": "major",    "reason": "CYP3A4/CYP2C9 inhibition raises warfarin levels → bleeding"},
+      "simvastatin": {"severity": "contraindicated", "reason": "CYP3A4 inhibition → rhabdomyolysis risk"},
+      "domperidone": {"severity": "contraindicated", "reason": "Both prolong QTc → arrhythmia risk"}
+    }
+  },
+
+  "ciprofloxacin": {
+    "class": "fluoroquinolone",
+    "brands": ["Cipro", "Ciplox", "Cifran"],
+    "allergen_groups": ["fluoroquinolone"],
+    "interactions": {
+      "warfarin":      {"severity": "major",    "reason": "Ciprofloxacin inhibits CYP1A2 → markedly elevated INR"},
+      "theophylline":  {"severity": "major",    "reason": "CYP1A2 inhibition → theophylline toxicity (seizures, arrhythmia)"},
+      "antacids":      {"severity": "moderate", "reason": "Divalent cations chelate fluoroquinolones → reduced absorption"},
+      "domperidone":   {"severity": "moderate", "reason": "Additive QTc prolongation; monitor ECG"},
+      "metformin":     {"severity": "moderate", "reason": "May rarely cause hypoglycaemia in diabetic patients"},
+      "nsaid":         {"severity": "moderate", "reason": "Fluoroquinolone + NSAID increases seizure risk"}
+    }
+  },
+
+  "levofloxacin": {
+    "class": "fluoroquinolone",
+    "brands": ["Levaquin", "Levoflox", "Tavanic"],
+    "allergen_groups": ["fluoroquinolone"],
+    "interactions": {
+      "warfarin":    {"severity": "major",    "reason": "May increase INR; monitor closely"},
+      "domperidone": {"severity": "moderate", "reason": "Additive QTc prolongation"},
+      "ondansetron": {"severity": "moderate", "reason": "Additive QTc prolongation; monitor ECG"},
+      "nsaid":       {"severity": "moderate", "reason": "Fluoroquinolone + NSAID increases seizure risk"}
+    }
+  },
+
+  "metronidazole": {
+    "class": "nitroimidazole",
+    "brands": ["Flagyl", "Metrogyl", "Metro"],
+    "allergen_groups": ["nitroimidazole"],
+    "interactions": {
+      "warfarin":  {"severity": "major",          "reason": "CYP2C9 inhibition → markedly elevated INR → bleeding risk"},
+      "alcohol":   {"severity": "contraindicated","reason": "Disulfiram-like reaction — flushing, vomiting, palpitations"},
+      "lithium":   {"severity": "major",          "reason": "Metronidazole reduces renal lithium clearance → toxicity"}
+    }
+  },
+
+  "doxycycline": {
+    "class": "tetracycline",
+    "brands": ["Doxt", "Vibramycin", "Biodoxi"],
+    "allergen_groups": ["tetracycline"],
+    "interactions": {
+      "antacids":   {"severity": "moderate", "reason": "Divalent cations reduce doxycycline absorption"},
+      "warfarin":   {"severity": "moderate", "reason": "May slightly potentiate warfarin"},
+      "isotretinoin":{"severity": "contraindicated", "reason": "Both tetracyclines and retinoids cause intracranial hypertension"}
+    }
+  },
+
+  "cotrimoxazole": {
+    "class": "sulfonamide_trimethoprim",
+    "brands": ["Bactrim", "Septran", "Cotrim"],
+    "allergen_groups": ["sulfa", "sulfonamide"],
+    "interactions": {
+      "warfarin":     {"severity": "major",    "reason": "CYP2C9 inhibition → major bleeding risk"},
+      "methotrexate": {"severity": "contraindicated", "reason": "Both are folate antagonists → bone marrow toxicity"},
+      "phenytoin":    {"severity": "major",    "reason": "CYP2C9 inhibition → phenytoin toxicity (nystagmus, ataxia)"}
+    }
+  },
+
+  "ibuprofen": {
+    "class": "nsaid",
+    "brands": ["Brufen", "Combiflam", "Ibugesic"],
+    "allergen_groups": ["nsaid"],
+    "interactions": {
+      "warfarin":     {"severity": "major",          "reason": "Dual mechanism — antiplatelet + CYP2C9 inhibition → bleeding"},
+      "aspirin":      {"severity": "major",          "reason": "Ibuprofen blocks aspirin's antiplatelet effect + additive GI risk"},
+      "lithium":      {"severity": "major",          "reason": "NSAIDs reduce renal lithium clearance → toxicity"},
+      "methotrexate": {"severity": "major",          "reason": "NSAIDs reduce methotrexate clearance → toxicity"},
+      "lisinopril":   {"severity": "moderate",       "reason": "NSAIDs blunt ACE inhibitor effect on BP and may worsen renal function"},
+      "ciprofloxacin":{"severity": "moderate",       "reason": "NSAID + fluoroquinolone increases seizure risk"},
+      "levofloxacin": {"severity": "moderate",       "reason": "NSAID + fluoroquinolone increases seizure risk"},
+      "prednisolone": {"severity": "major",          "reason": "Dual GI mucosal damage → peptic ulcer risk"},
+      "dexamethasone":{"severity": "major",          "reason": "Dual GI mucosal damage → peptic ulcer risk"}
+    }
+  },
+
+  "diclofenac": {
+    "class": "nsaid",
+    "brands": ["Voveran", "Voltaren", "Dicloran"],
+    "allergen_groups": ["nsaid"],
+    "interactions": {
+      "warfarin":     {"severity": "major",    "reason": "Antiplatelet + CYP2C9 inhibition → bleeding risk"},
+      "lithium":      {"severity": "major",    "reason": "NSAIDs reduce renal lithium clearance → toxicity"},
+      "methotrexate": {"severity": "major",    "reason": "NSAIDs reduce methotrexate clearance → toxicity"},
+      "lisinopril":   {"severity": "moderate", "reason": "NSAIDs blunt ACE inhibitor antihypertensive effect"},
+      "prednisolone": {"severity": "major",    "reason": "Dual GI mucosal damage → peptic ulcer risk"}
+    }
+  },
+
+  "naproxen": {
+    "class": "nsaid",
+    "brands": ["Naprosyn", "Naxdom", "Aleve"],
+    "allergen_groups": ["nsaid"],
+    "interactions": {
+      "warfarin":     {"severity": "major",    "reason": "Antiplatelet + CYP2C9 inhibition → bleeding"},
+      "lithium":      {"severity": "major",    "reason": "NSAIDs reduce renal lithium clearance → toxicity"},
+      "methotrexate": {"severity": "major",    "reason": "NSAIDs reduce methotrexate clearance → toxicity"}
+    }
+  },
+
+  "aspirin": {
+    "class": "nsaid_salicylate",
+    "brands": ["Ecosprin", "Loprin", "Astrix", "Disprin"],
+    "allergen_groups": ["nsaid", "salicylate"],
+    "interactions": {
+      "warfarin":  {"severity": "major", "reason": "Additive antiplatelet + anticoagulant effect → bleeding"},
+      "ibuprofen": {"severity": "major", "reason": "Ibuprofen antagonises aspirin's irreversible COX-1 inhibition"},
+      "methotrexate": {"severity": "major", "reason": "Aspirin reduces methotrexate clearance → toxicity"}
+    }
+  },
+
+  "paracetamol": {
+    "class": "analgesic_antipyretic",
+    "brands": ["Crocin", "Calpol", "Panadol", "Dolo", "Tylenol"],
+    "allergen_groups": [],
+    "interactions": {
+      "warfarin": {"severity": "moderate", "reason": "High-dose/chronic paracetamol may increase INR via CYP2C9"}
+    }
+  },
+
+  "tramadol": {
+    "class": "opioid_analgesic",
+    "brands": ["Ultram", "Tramazac", "Tramacip"],
+    "allergen_groups": ["opioid"],
+    "interactions": {
+      "sertraline":    {"severity": "contraindicated", "reason": "Serotonin syndrome risk — avoid combination"},
+      "ondansetron":   {"severity": "major",           "reason": "Ondansetron may reduce tramadol analgesic effect + serotonin risk"},
+      "alprazolam":    {"severity": "major",           "reason": "CNS depression + respiratory depression risk"},
+      "diazepam":      {"severity": "major",           "reason": "Additive CNS and respiratory depression"}
+    }
+  },
+
+  "metformin": {
+    "class": "biguanide_antidiabetic",
+    "brands": ["Glycomet", "Glucophage", "Obimet", "Gluconorm"],
+    "allergen_groups": [],
+    "interactions": {
+      "ciprofloxacin":  {"severity": "moderate", "reason": "May rarely cause hypoglycaemia; monitor glucose"},
+      "cephalexin":     {"severity": "moderate", "reason": "May slightly increase metformin AUC via OCT2 inhibition"},
+      "contrast_dye":   {"severity": "contraindicated", "reason": "Iodinated contrast with metformin → lactic acidosis risk"}
+    }
+  },
+
+  "glibenclamide": {
+    "class": "sulfonylurea_antidiabetic",
+    "brands": ["Daonil", "Semi-Daonil"],
+    "allergen_groups": ["sulfa", "sulfonylurea"],
+    "interactions": {
+      "cotrimoxazole": {"severity": "major", "reason": "Sulfonamide potentiates sulfonylurea hypoglycaemia"},
+      "ciprofloxacin": {"severity": "moderate", "reason": "Fluoroquinolones can cause hypo- or hyperglycaemia with sulfonylureas"},
+      "fluconazole":   {"severity": "major", "reason": "CYP2C9 inhibition → significant hypoglycaemia risk"}
+    }
+  },
+
+  "lisinopril": {
+    "class": "ace_inhibitor",
+    "brands": ["Zestril", "Prinivil", "Listril"],
+    "allergen_groups": [],
+    "interactions": {
+      "ibuprofen":  {"severity": "moderate", "reason": "NSAIDs blunt ACE inhibitor antihypertensive effect"},
+      "diclofenac": {"severity": "moderate", "reason": "NSAIDs blunt ACE inhibitor antihypertensive effect"},
+      "spironolactone": {"severity": "major", "reason": "Additive hyperkalaemia risk — monitor potassium"},
+      "potassium":  {"severity": "major", "reason": "ACE inhibitor + K+ supplement → hyperkalaemia"},
+      "lithium":    {"severity": "major", "reason": "ACE inhibitors reduce renal lithium clearance → toxicity"}
+    }
+  },
+
+  "amlodipine": {
+    "class": "calcium_channel_blocker",
+    "brands": ["Norvasc", "Amlip", "Stamlo"],
+    "allergen_groups": ["dihydropyridine_ccb"],
+    "interactions": {
+      "simvastatin":     {"severity": "major",    "reason": "Amlodipine inhibits CYP3A4 → simvastatin myopathy; cap simvastatin at 20 mg"},
+      "clarithromycin":  {"severity": "major",    "reason": "CYP3A4 inhibition → amlodipine accumulation → hypotension"}
+    }
+  },
+
+  "atenolol": {
+    "class": "beta_blocker",
+    "brands": ["Tenormin", "Aten"],
+    "allergen_groups": ["beta_blocker"],
+    "interactions": {
+      "verapamil":  {"severity": "contraindicated", "reason": "Both depress cardiac conduction → complete heart block risk"},
+      "diltiazem":  {"severity": "contraindicated", "reason": "Both depress cardiac conduction → complete heart block risk"},
+      "insulin":    {"severity": "moderate",        "reason": "Beta blockers mask hypoglycaemia symptoms; bradycardia may persist"},
+      "clonidine":  {"severity": "major",           "reason": "Withdrawal of clonidine with beta blocker → hypertensive crisis"}
+    }
+  },
+
+  "losartan": {
+    "class": "arb_antihypertensive",
+    "brands": ["Cozaar", "Losar", "Repace"],
+    "allergen_groups": [],
+    "interactions": {
+      "spironolactone": {"severity": "major",    "reason": "Additive hyperkalaemia risk"},
+      "ibuprofen":      {"severity": "moderate", "reason": "NSAIDs blunt ARB antihypertensive effect"},
+      "lithium":        {"severity": "major",    "reason": "ARBs reduce renal lithium clearance → toxicity"}
+    }
+  },
+
+  "atorvastatin": {
+    "class": "statin",
+    "brands": ["Lipitor", "Atorva", "Aztor"],
+    "allergen_groups": [],
+    "interactions": {
+      "clarithromycin": {"severity": "major",    "reason": "CYP3A4 inhibition → atorvastatin accumulation → myopathy"},
+      "amlodipine":     {"severity": "moderate", "reason": "Amlodipine mildly raises atorvastatin levels; keep atorvastatin ≤40 mg"},
+      "warfarin":       {"severity": "moderate", "reason": "Atorvastatin may slightly potentiate warfarin"}
+    }
+  },
+
+  "simvastatin": {
+    "class": "statin",
+    "brands": ["Zocor", "Simcard", "Simlup"],
+    "allergen_groups": [],
+    "interactions": {
+      "clarithromycin": {"severity": "contraindicated", "reason": "CYP3A4 inhibition → severe simvastatin accumulation → rhabdomyolysis"},
+      "erythromycin":   {"severity": "contraindicated", "reason": "CYP3A4 inhibition → rhabdomyolysis risk"},
+      "amlodipine":     {"severity": "major",           "reason": "Amlodipine raises simvastatin levels; cap simvastatin at 20 mg"},
+      "warfarin":       {"severity": "moderate",        "reason": "May potentiate warfarin anticoagulation"}
+    }
+  },
+
+  "warfarin": {
+    "class": "anticoagulant_vitamin_k_antagonist",
+    "brands": ["Warf", "Coumadin", "Uniwarfin"],
+    "allergen_groups": ["coumarin"],
+    "interactions": {
+      "aspirin":        {"severity": "major",          "reason": "Additive bleeding risk via antiplatelet + anticoagulation"},
+      "ibuprofen":      {"severity": "major",          "reason": "Dual mechanism → bleeding risk"},
+      "cotrimoxazole":  {"severity": "major",          "reason": "CYP2C9 inhibition → markedly elevated INR"},
+      "metronidazole":  {"severity": "major",          "reason": "CYP2C9 inhibition → bleeding"},
+      "ciprofloxacin":  {"severity": "major",          "reason": "CYP1A2 inhibition → elevated INR"},
+      "clarithromycin": {"severity": "major",          "reason": "CYP2C9/3A4 inhibition → elevated INR → bleeding"},
+      "amiodarone":     {"severity": "contraindicated","reason": "Amiodarone markedly potentiates warfarin → life-threatening bleeding"}
+    }
+  },
+
+  "omeprazole": {
+    "class": "proton_pump_inhibitor",
+    "brands": ["Omez", "Prilosec", "Ocid"],
+    "allergen_groups": ["ppi"],
+    "interactions": {
+      "clopidogrel": {"severity": "major",    "reason": "Omeprazole inhibits CYP2C19 → reduces clopidogrel activation → thrombotic risk"},
+      "methotrexate":{"severity": "moderate", "reason": "PPIs may reduce methotrexate renal clearance"}
+    }
+  },
+
+  "pantoprazole": {
+    "class": "proton_pump_inhibitor",
+    "brands": ["Pan", "Pantocid", "Protium"],
+    "allergen_groups": ["ppi"],
+    "interactions": {
+      "methotrexate": {"severity": "moderate", "reason": "PPIs may reduce methotrexate renal clearance"}
+    }
+  },
+
+  "domperidone": {
+    "class": "dopamine_antagonist_antiemetic",
+    "brands": ["Motilium", "Domstal", "Vomistop"],
+    "allergen_groups": [],
+    "interactions": {
+      "azithromycin":    {"severity": "contraindicated", "reason": "Both prolong QTc → fatal arrhythmia risk"},
+      "clarithromycin":  {"severity": "contraindicated", "reason": "Both prolong QTc → fatal arrhythmia risk"},
+      "erythromycin":    {"severity": "contraindicated", "reason": "Both prolong QTc → fatal arrhythmia risk"},
+      "ciprofloxacin":   {"severity": "moderate",        "reason": "Additive QTc prolongation; monitor ECG"}
+    }
+  },
+
+  "ondansetron": {
+    "class": "5ht3_antagonist_antiemetic",
+    "brands": ["Zofran", "Emeset", "Ondem"],
+    "allergen_groups": [],
+    "interactions": {
+      "tramadol":       {"severity": "major",           "reason": "Ondansetron may antagonise tramadol analgesia + serotonin risk"},
+      "azithromycin":   {"severity": "contraindicated", "reason": "Both prolong QTc → arrhythmia risk"},
+      "clarithromycin": {"severity": "contraindicated", "reason": "Both prolong QTc → arrhythmia risk"},
+      "levofloxacin":   {"severity": "moderate",        "reason": "Additive QTc prolongation; monitor ECG"},
+      "sertraline":     {"severity": "major",           "reason": "Additive QTc prolongation + mild serotonin syndrome risk"}
+    }
+  },
+
+  "sertraline": {
+    "class": "ssri_antidepressant",
+    "brands": ["Zoloft", "Serta", "Daxid"],
+    "allergen_groups": ["ssri"],
+    "interactions": {
+      "tramadol":   {"severity": "contraindicated", "reason": "Serotonin syndrome — potentially fatal; avoid combination"},
+      "ondansetron":{"severity": "major",           "reason": "Additive QTc prolongation + serotonin syndrome risk"},
+      "warfarin":   {"severity": "moderate",        "reason": "SSRIs may increase bleeding risk via antiplatelet effect"}
+    }
+  },
+
+  "alprazolam": {
+    "class": "benzodiazepine",
+    "brands": ["Xanax", "Alprax", "Restyl"],
+    "allergen_groups": ["benzodiazepine"],
+    "interactions": {
+      "tramadol":    {"severity": "major", "reason": "Additive CNS and respiratory depression → risk of death"},
+      "alcohol":     {"severity": "contraindicated", "reason": "Additive CNS depression → fatal respiratory depression"},
+      "clarithromycin":{"severity": "major", "reason": "CYP3A4 inhibition → alprazolam accumulation → excessive sedation"}
+    }
+  },
+
+  "prednisolone": {
+    "class": "corticosteroid",
+    "brands": ["Wysolone", "Deltacortril"],
+    "allergen_groups": ["corticosteroid"],
+    "interactions": {
+      "ibuprofen":  {"severity": "major", "reason": "Dual GI mucosal damage → peptic ulcer risk"},
+      "diclofenac": {"severity": "major", "reason": "Dual GI mucosal damage → peptic ulcer risk"},
+      "warfarin":   {"severity": "moderate", "reason": "Variable effect on INR; monitor closely"},
+      "metformin":  {"severity": "moderate", "reason": "Corticosteroids impair glucose tolerance → monitor blood glucose"}
+    }
+  },
+
+  "dexamethasone": {
+    "class": "corticosteroid",
+    "brands": ["Decadron", "Dexona", "Wymesone"],
+    "allergen_groups": ["corticosteroid"],
+    "interactions": {
+      "ibuprofen":  {"severity": "major",    "reason": "Dual GI mucosal damage → peptic ulcer risk"},
+      "warfarin":   {"severity": "moderate", "reason": "Variable effect on INR; monitor closely"},
+      "metformin":  {"severity": "moderate", "reason": "Corticosteroids impair glucose tolerance → monitor blood glucose"}
+    }
+  },
+
+  "levothyroxine": {
+    "class": "thyroid_hormone",
+    "brands": ["Eltroxin", "Thyronorm", "Synthroid"],
+    "allergen_groups": [],
+    "interactions": {
+      "antacids":  {"severity": "moderate", "reason": "Calcium/magnesium antacids reduce levothyroxine absorption — separate by 4 h"},
+      "warfarin":  {"severity": "major",    "reason": "Levothyroxine potentiates warfarin anticoagulation → bleeding risk"},
+      "metformin": {"severity": "moderate", "reason": "May reduce levothyroxine efficacy in some patients"}
+    }
+  },
+
+  "amiodarone": {
+    "class": "class_iii_antiarrhythmic",
+    "brands": ["Cordarone", "Tachyra"],
+    "allergen_groups": ["iodine"],
+    "interactions": {
+      "warfarin":     {"severity": "contraindicated", "reason": "Markedly potentiates warfarin → life-threatening bleeding"},
+      "simvastatin":  {"severity": "major",           "reason": "CYP3A4 inhibition → simvastatin myopathy"},
+      "azithromycin": {"severity": "contraindicated", "reason": "Additive QTc prolongation → fatal arrhythmia risk"},
+      "digoxin":      {"severity": "major",           "reason": "Amiodarone raises digoxin levels → toxicity (bradycardia, block)"}
+    }
+  },
+
+  "digoxin": {
+    "class": "cardiac_glycoside",
+    "brands": ["Lanoxin", "Digoxin Nativelle"],
+    "allergen_groups": [],
+    "interactions": {
+      "amiodarone":     {"severity": "major",           "reason": "Amiodarone raises digoxin levels → toxicity"},
+      "azithromycin":   {"severity": "major",           "reason": "Macrolides increase digoxin absorption → toxicity"},
+      "clarithromycin": {"severity": "major",           "reason": "Macrolides increase digoxin absorption → toxicity"},
+      "spironolactone": {"severity": "moderate",        "reason": "Spironolactone may interfere with digoxin assay; monitor levels"}
+    }
+  },
+
+  "spironolactone": {
+    "class": "potassium_sparing_diuretic",
+    "brands": ["Aldactone", "Lasilactone"],
+    "allergen_groups": [],
+    "interactions": {
+      "lisinopril":     {"severity": "major", "reason": "Additive hyperkalaemia risk → cardiac arrhythmia"},
+      "losartan":       {"severity": "major", "reason": "Additive hyperkalaemia risk → cardiac arrhythmia"},
+      "potassium":      {"severity": "major", "reason": "Additive hyperkalaemia risk → cardiac arrhythmia"},
+      "digoxin":        {"severity": "moderate", "reason": "Spironolactone may interfere with digoxin assay; monitor levels"}
+    }
+  },
+
+  "methotrexate": {
+    "class": "antimetabolite_dmard",
+    "brands": ["Folitrax", "Methofar", "Methex"],
+    "allergen_groups": [],
+    "interactions": {
+      "cotrimoxazole":  {"severity": "contraindicated", "reason": "Both folate antagonists → severe bone marrow toxicity"},
+      "ibuprofen":      {"severity": "major",           "reason": "NSAIDs reduce methotrexate clearance → toxicity"},
+      "aspirin":        {"severity": "major",           "reason": "NSAIDs reduce methotrexate clearance → toxicity"},
+      "amoxicillin":    {"severity": "major",           "reason": "Beta-lactams reduce methotrexate renal clearance → toxicity"},
+      "omeprazole":     {"severity": "moderate",        "reason": "PPIs may reduce methotrexate renal clearance"}
+    }
+  },
+
+  "cetirizine": {
+    "class": "antihistamine_second_generation",
+    "brands": ["Zyrtec", "Cetzine", "Allercet"],
+    "allergen_groups": ["antihistamine"],
+    "interactions": {
+      "alcohol": {"severity": "moderate", "reason": "Additive CNS sedation"}
+    }
+  },
+
+  "loratadine": {
+    "class": "antihistamine_second_generation",
+    "brands": ["Claritin", "Lorfast", "Alaspan"],
+    "allergen_groups": ["antihistamine"],
+    "interactions": {}
+  },
+
+  "montelukast": {
+    "class": "leukotriene_receptor_antagonist",
+    "brands": ["Singulair", "Montair", "Telekast"],
+    "allergen_groups": [],
+    "interactions": {}
+  },
+
+  "furosemide": {
+    "class": "loop_diuretic",
+    "brands": ["Lasix", "Frusemide"],
+    "allergen_groups": ["sulfa"],
+    "interactions": {
+      "lithium": {"severity": "major",    "reason": "Loop diuretics reduce renal lithium clearance → toxicity"},
+      "digoxin": {"severity": "moderate", "reason": "Furosemide-induced hypokalaemia potentiates digoxin toxicity"}
+    }
+  },
+
+  "_cross_reactivity": {
+    "_comment": "Groups where allergy to one member implies risk with any member of the same group. List each pair once.",
+    "penicillin_to_cephalosporin": {
+      "from_group": "penicillin",
+      "to_group":   "cephalosporin",
+      "severity":   "major",
+      "reason":     "~1-2% cross-reactivity between penicillins and cephalosporins; use cephalosporins with caution in penicillin-allergic patients"
+    },
+    "sulfa_to_sulfonylurea": {
+      "from_group": "sulfa",
+      "to_group":   "sulfonylurea",
+      "severity":   "moderate",
+      "reason":     "Structural similarity — sulfonamide-allergic patients may react to sulfonylurea oral hypoglycaemics"
+    },
+    "sulfa_to_furosemide": {
+      "from_group": "sulfa",
+      "to_group":   "sulfa",
+      "severity":   "major",
+      "reason":     "Furosemide contains a sulfonamide moiety — risk in sulfa-allergic patients"
+    },
+    "nsaid_cross": {
+      "from_group": "nsaid",
+      "to_group":   "nsaid",
+      "severity":   "contraindicated",
+      "reason":     "Cross-reactivity among NSAIDs is common, especially aspirin-exacerbated respiratory disease"
+    }
+  }
+}
