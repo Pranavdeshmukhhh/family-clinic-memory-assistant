@@ -1,5 +1,7 @@
 # 🏥 Family Clinic Memory Assistant
 
+> **Demo video: \<link\>**
+
 > **AI-Powered Clinic & Pharmacy Assistant with Continuity of Care, powered by Hindsight Memory and Groq LLM.**
 
 ---
@@ -16,16 +18,16 @@ This project connects those two rooms through a single, persistent memory of eve
 - **Continuous Patient Memory (Hindsight)**: Recalls complete longitudinal patient history across visits (diagnoses, previous regimens, lab trends, allergies).
 - **Graceful Onboarding**: Automatically initializes a dedicated memory bank (`bank_id = patient_id`) for new patients.
 - **AI Clinical Reasoning (Groq `openai/gpt-oss-120b`)**: Contextual diagnosis and prescription suggestions referencing prior visits.
-- **Module 1 — Allergy & Interaction Checking**: Recalls patient allergies and current medications; flags conflicts with a high-priority red warning banner.
-- **Module 2 — With / Without Memory Toggle**: Run the same clinical encounter with or without past memory to evaluate differential AI decision-making side-by-side.
-- **Module 3 — Patient Risk Profile (`hindsight.reflect`)**: Uses Hindsight synthesis to generate longitudinal risk summaries, recurring patterns, and chronic disease trends.
+- **Deterministic Allergy & Interaction Checker**: Code-based safety layer — 40 drugs, cross-reactivity, interactions, duplicate therapy. The LLM cannot override safety findings.
+- **With / Without Memory Toggle**: Run the same clinical encounter with or without past memory to evaluate differential AI decision-making side-by-side.
+- **Patient Risk Profile (`hindsight.reflect`)**: Hindsight synthesis to generate longitudinal risk summaries, recurring patterns, and chronic disease trends.
 - **Human Approval Gate**: The AI drafts a prescription; the doctor reviews, may edit medicine or dosage, and must explicitly approve before anything reaches the pharmacy.
 
 ### 2. Pharmacy Counter
 - **Real-Time Prescription Queue**: Pulls pending prescriptions directly from the doctor's desk with zero manual re-entry.
 - **Stock-Aware Dispensing**: Automatically checks live SQLite inventory upon dispensing and decrements quantities.
-- **Intelligent Drug Substitution**: If an item is out of stock, Groq suggests a therapeutic alternative from available stock in the same drug class.
-- **Module 4 — Restock Alerts (File + Telegram)**: If stock drops below threshold, alerts are appended to `stores/requirements.txt` (with duplicate suppression) and pushed via Telegram bot notifications.
+- **Intelligent Drug Substitution**: If an item is out of stock, the system suggests a therapeutic alternative from available stock in the same drug class.
+- **Restock Alerts (File + Telegram)**: If stock drops below threshold, alerts are appended to `stores/requirements.txt` (with duplicate suppression) and pushed via Telegram bot notifications.
 
 ---
 
@@ -35,18 +37,41 @@ Hindsight is the connective tissue between every interaction in this system. Her
 
 | Operation | When | What is stored / retrieved |
 |-----------|------|---------------------------|
-| **`aretain`** — visit notes | After every `/doctor/visit` | Symptoms, doctor notes, AI-suggested diagnosis. The prescription itself is **not** retained until the doctor approves it. |
-| **`aretain`** — approval | After `/doctor/approve` | `"Dr approved prescription: <medicine> <dosage>. Sent to pharmacy on <date>."` with context `doctor_approved`. |
-| **`aretain`** — rejection | After `/doctor/reject` | `"Suggestion rejected by doctor: <medicine>."` with context `doctor_rejected`. |
-| **`aretain`** — dispense | After `/pharmacy/dispense` | What was dispensed, quantity remaining, any substitution made. |
-| **`arecall`** — before visit | At the start of `/doctor/visit` | Patient history queried against the presenting symptoms; also a separate allergy recall. |
-| **`arecall`** — before dispense | At the start of `/pharmacy/dispense` | Patient context surfaced at the pharmacy counter. |
-| **`areflect`** — risk profile | On `/patient/{id}/summary` | Hindsight synthesises the full bank into a longitudinal risk summary. |
+| **`retain()`** — visit notes | After every `/doctor/visit` | Symptoms, doctor notes, AI-suggested diagnosis. The prescription itself is **not** retained until the doctor approves it. |
+| **`retain()`** — approval | After `/doctor/approve` | `"Dr approved prescription: <medicine> <dosage>. Sent to pharmacy on <date>."` with context `doctor_approved`. |
+| **`retain()`** — rejection | After `/doctor/reject` | `"Suggestion rejected by doctor: <medicine>."` with context `doctor_rejected`. |
+| **`retain()`** — dispense | After `/pharmacy/dispense` | What was dispensed, quantity remaining, any substitution made. |
+| **`recall()`** — before visit | At the start of `/doctor/visit` | Patient history queried against the presenting symptoms; also a separate allergy recall. |
+| **`recall()`** — before dispense | At the start of `/pharmacy/dispense` | Patient context surfaced at the pharmacy counter. |
+| **`reflect()`** — risk profile | On `/patient/{id}/summary` | Hindsight synthesises the full bank into a longitudinal risk summary. |
 
-**Key design decisions:**
-- One Hindsight bank per patient (`bank_id = patient_id`). Banks are isolated — no patient can see another's data.
+### Key design decisions
+- **One Hindsight bank per patient** (`bank_id = patient_id`). Banks are isolated — no patient can see another's data.
 - Hindsight holds **clinical context only**. Inventory levels and prescription records (including status: `draft` → `pending` → `dispensed`) live in SQLite.
-- The **With / Without Memory toggle** (Module 2) runs two parallel calls to `/doctor/visit` — one with `use_memory=true`, one with `use_memory=false` — so you can see on the same case what the AI does without any history.
+- The **With / Without Memory toggle** runs the same symptoms through `/doctor/visit` twice — once with `use_memory=true`, once with `use_memory=false` — so you can see on the same case what the AI does without any history.
+
+### How the agent improves from Visit 1 to Visit 5
+
+| Visit | What the AI knows (with memory ON) | What improves |
+|-------|-----------------------------------|---------------|
+| **Visit 1** | Nothing — "No prior history, first visit." | Generic diagnosis from symptoms alone. |
+| **Visit 2** | Recalls Visit 1 diagnosis, prescribed drugs, lab values. | References prior treatment ("Patient was started on Metformin 500mg — fasting glucose improved from 168 to 148.") |
+| **Visit 3** | Recalls both previous visits + documented allergy. | **Avoids contraindicated drugs** (e.g., skips Amoxicillin for a penicillin-allergic patient with sore throat, prescribes Azithromycin instead). |
+| **Visit 4** | Full longitudinal trend: labs improving, medications stable. | Adjusts dosing based on trends ("HbA1c improved from 7.8% to 7.1% — continue current regimen"). |
+| **Visit 5** | Recognises worsening pattern (e.g., glucose rising again). | Proactively escalates ("Glycemic control slipping despite Metformin 500mg BD — increase to 1000mg BD"). |
+
+**Without memory**, every visit is Visit 1. The AI cannot reference allergies, track lab trends, or build on past decisions.
+
+### Concrete before/after example
+
+**Patient: Ravi Kumar, 58M. Presenting: "sore throat, mild fever."**
+
+| | Without Memory | With Memory |
+|---|---|---|
+| **History** | "No prior history — first visit." | "Recalled 5 prior visits. Type 2 Diabetes on Metformin 1000mg BD + Amlodipine 5mg + Atorvastatin 10mg. **Penicillin allergy documented (hives after Amoxicillin, 2018).**" |
+| **Diagnosis** | "Upper Respiratory Tract Infection" | "Viral pharyngitis in context of diabetes — monitor glucose during illness" |
+| **Prescription** | "Amoxicillin 250mg TDS × 5 days" | "Azithromycin 500mg OD × 3 days (penicillin allergy — avoided Amoxicillin)" |
+| **Safety** | ❌ No allergy flag (AI has no history) | ✅ **Deterministic allergy check blocks Amoxicillin** even if LLM makes a mistake |
 
 ---
 
@@ -56,47 +81,78 @@ This system is **clinical decision support, not autonomous prescribing**.
 
 - The AI produces a draft. The draft is saved with status `"draft"` and is invisible to the pharmacy.
 - The doctor must read the suggestion, optionally edit the medicine name or dosage, and click **Approve** before the prescription changes status to `"pending"` and appears in the pharmacy queue.
+- **Deterministic safety checker** (`app/services/safety.py`) runs on every visit BEFORE the LLM and again at approval time. It checks allergies, cross-reactivity (e.g., penicillin → cephalosporin), drug-drug interactions, and duplicate therapy. The LLM cannot add or remove safety findings.
+- **Contraindicated findings block approval** unless the doctor provides a written `override_reason`, which is stored in the audit log.
 - Rejecting a suggestion marks the prescription `"rejected"` and retains a rejection note to Hindsight so future visits know what was tried and discarded.
 - Patient memory is isolated per Hindsight bank. No cross-patient recall is possible by design.
 - All patient data in this demo is **fully synthetic**. No real clinical data was used at any point.
+
+> ⚠️ **Disclaimer**: This is decision support only. A licensed doctor must review every prescription before it reaches a patient.
 
 ---
 
 ## 🚧 Known Limitations
 
-- **No authentication**: There is no login, session management, or role separation. Anyone with network access to port 8000 can use either interface. This is a demo, not a production system.
-- **LLM output is parsed but not schema-validated**: Groq responses are parsed as JSON with a fallback rule engine. The parsed fields are used directly without a formal schema validator. Malformed or unexpected model output may degrade gracefully rather than fail explicitly.
+- **Single-user demo**: Authentication and role separation (doctor/pharmacist/owner) exist in code but the demo UI uses pre-configured demo tokens. This is not a multi-tenant production system.
+- **LLM output is parsed but not schema-validated**: Groq responses are parsed as JSON with a fallback rule engine. Malformed model output degrades gracefully.
 - **Single SQLite file**: `clinic.db` is a local file. There is no replication, backup, or migration tooling.
-- **No audit log**: Approved, rejected, and dispensed events are retained to Hindsight and logged to the console, but there is no structured, tamper-evident audit trail.
+- **Drug knowledge base**: The safety checker covers ~40 common Indian-market drugs. Drugs not in the knowledge base produce a warning, not silence, but coverage is not exhaustive.
+- **No real patient data**: All names, histories, and lab values are synthetic.
+- **Decision support only**: The AI assists; a licensed clinician must always review and approve.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone and install
+```bash
+git clone https://github.com/Pranavdeshmukhhh/family-clinic-memory-assistant.git
+cd family-clinic-memory-assistant
+pip install -r requirements.txt
+```
+
+### 2. Configure environment
+```bash
+cp .env.example .env
+# Edit .env with your API keys, OR set DEMO_MODE=true to run without keys
+```
+
+### 3. Seed demo patients
+```bash
+python scripts/seed_demo.py
+```
+This creates 3 patients with realistic multi-visit histories:
+- **patient_001 — Ravi Kumar** (58M, hypertension + diabetes, penicillin allergy, 5 visits)
+- **patient_002 — Lakshmi Devi** (45F, type 2 diabetes + hypothyroidism, 4 visits)
+- **patient_003 — Arjun Reddy** (30M, recurring migraine, NSAID sensitivity, 3 visits)
+
+### 4. Run the app
+```bash
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
 ## 🎬 Demo Walkthrough
 
-Three seed patients are created automatically on startup. Each demonstrates a distinct scenario:
+### patient_001 — Ravi Kumar, 58 (Returning patient, penicillin allergy)
+1. Open **Doctor's Desk** → enter `patient_001`, symptoms: *"sore throat, mild fever"*.
+2. Submit — the AI recalls 5 prior visits, the penicillin allergy, and the diabetes history.
+3. If the AI suggests Amoxicillin, the **deterministic allergy checker** fires a red warning.
+4. Approve (or edit) → switch to **Pharmacy Counter** → dispense.
 
-### patient_001 — Rajesh Kumar, 54 (Returning patient, allergy present)
-1. Open **Doctor's Desk** → click `patient_001` in the demo panel or the patient strip.
-2. Enter symptoms such as *"elevated fasting glucose, fatigue"*.
-3. Submit — the AI recalls two prior visits (August and September 2026) and notes the **penicillin allergy**.
-4. If the AI suggests Amoxicillin, a **red allergy warning banner** fires immediately.
-5. The draft card appears. Edit the medicine if needed, then click **Approve & Send to Pharmacy**.
-6. Switch to **Pharmacy Counter** — the prescription appears in the queue. Click **Dispense**.
+### patient_002 — Lakshmi Devi, 45 (Diabetes + neuropathy)
+1. Enter `patient_002`, symptoms: *"tingling in feet, fatigue"*.
+2. The AI recalls 4 prior visits, the HbA1c trend, and prior Pregabalin prescription.
+3. Approve and dispense.
 
-### patient_002 — Meera Iyer, 29 (Returning patient, low stock scenario)
-1. Enter `patient_002` in the doctor form.
-2. Submit with symptoms like *"headache, high blood pressure"*.
-3. The AI recalls her prior hypertension visit (September 2026) and is likely to suggest Lisinopril.
-4. Approve the prescription → go to Pharmacy.
-5. Lisinopril has low seed stock (qty 6, threshold 10). After dispensing, a **restock alert** triggers and stock drops to 5.
+### patient_003 — Arjun Reddy, 30 (Migraine, NSAID sensitivity)
+1. Enter `patient_003`, symptoms: *"severe headache, nausea"*.
+2. The AI recalls migraine history and Propranolol regimen, avoids NSAIDs.
 
-### patient_003 — (New patient, no history)
-1. Enter `patient_003` — this bank exists but has no retained memories.
-2. Submit any symptoms.
-3. The **"No prior history — first visit"** message appears in the memory panel.
-4. The AI reasons from symptoms alone, with no history context. Approve and dispense normally.
-
-> **Tip:** Use the **⚡ Compare Memory Effect** button with `patient_001` to run two simultaneous consultations — one with full history, one without — and see how the prescriptions differ.
+> **Tip:** Use the **⚡ Compare Memory Effect** button to run two simultaneous consultations — one with full history, one without — and see how the prescriptions differ.
 
 ---
 
@@ -112,6 +168,7 @@ graph TD
     subgraph Backend["FastAPI Backend (Port 8000)"]
         API["FastAPI Endpoints"]
         Eng["Clinical Decision Engine"]
+        Safety["Deterministic Safety Checker<br/>(40 drugs, allergy + interaction rules)"]
     end
 
     subgraph Memory["Hindsight Cloud API"]
@@ -119,23 +176,22 @@ graph TD
     end
 
     subgraph LLM["Groq Cloud API"]
-        G["openai/gpt-oss-120b<br/>(Clinical Diagnosis, Substitution, Allergen Checks)"]
+        G["openai/gpt-oss-120b<br/>(Clinical Diagnosis, Substitution)"]
     end
 
     subgraph Storage["Structured Storage & Alerts"]
-        DB[("SQLite: clinic.db<br/>• inventory<br/>• prescriptions")]
+        DB[("SQLite: clinic.db<br/>• inventory<br/>• prescriptions<br/>• audit_log")]
         FS["stores/requirements.txt"]
         TG["Telegram Bot Alerts"]
     end
 
     D -->|POST /doctor/visit| API
     D -->|POST /doctor/approve| API
-    D -->|POST /doctor/reject| API
-    D -->|GET /patient/:id/summary| API
     P -->|GET /pharmacy/pending| API
     P -->|POST /pharmacy/dispense| API
 
-    API --> Eng
+    API --> Safety
+    Safety --> Eng
     Eng <-->|Async Memory Sync| H
     Eng <-->|Reasoning Prompts| G
     Eng <-->|State Updates| DB
@@ -149,53 +205,26 @@ graph TD
 
 ```
 ├── .env.example              # Template for environment configuration
-├── .gitignore                # Security-focused ignore rules (keeps secrets & DB out of git)
+├── .gitignore                # Security-focused ignore rules
+├── LICENSE                   # MIT License
+├── README.md                 # This file
 ├── requirements.txt          # Python dependencies
-├── main.py                   # Complete FastAPI application with async Hindsight & Groq
-├── static/
-│   ├── index.html            # Landing page
-│   ├── doctor.html           # Doctor's Desk interface
-│   └── pharmacy.html         # Pharmacy Counter interface
-├── README.md                 # Project documentation
-└── stores/                   # Generated directory for restock requirements (ignored)
+├── main.py                   # Uvicorn entry point
+├── app/
+│   ├── main.py               # FastAPI app factory, routers, middleware
+│   ├── config.py             # Pydantic settings (fail-closed)
+│   ├── db.py                 # SQLite connection, migrations, schema
+│   ├── models.py             # Pydantic request/response schemas
+│   ├── routers/              # doctor, pharmacy, patient, admin, auth, health
+│   └── services/             # memory, llm, safety, inventory, alerts, audit, auth
+├── data/
+│   └── drug_knowledge.json   # 40-drug safety knowledge base
+├── scripts/
+│   └── seed_demo.py          # Seed 3 patients with realistic histories
+├── static/                   # HTML/CSS/JS frontend
+├── tests/                    # pytest test suite (114+ tests)
+└── pyproject.toml            # ruff + mypy config
 ```
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/Pranavdeshmukhhh/family-clinic-memory-assistant.git
-cd family-clinic-memory-assistant
-```
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Configure environment variables
-Copy the template and fill in your API credentials:
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-```ini
-HINDSIGHT_API_KEY=your_hindsight_api_key_here
-HINDSIGHT_BASE_URL=https://api.hindsight.vectorize.io
-GROQ_API_KEY=your_groq_api_key_here
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-TELEGRAM_CHAT_ID=your_telegram_chat_id_here
-```
-
-### 4. Run the application
-```bash
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
@@ -203,23 +232,31 @@ Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/` | Landing page |
-| `GET` | `/doctor` | Doctor's Desk UI |
-| `GET` | `/pharmacy` | Pharmacy Counter UI |
-| `POST` | `/doctor/visit` | Submits symptoms, consults memory & Groq, saves as draft prescription |
-| `POST` | `/doctor/approve` | Doctor approves (optionally edits) draft → status becomes `pending` |
-| `POST` | `/doctor/reject` | Doctor rejects draft → status becomes `rejected` |
-| `GET` | `/pharmacy/pending` | Live queue of doctor-approved prescriptions only |
-| `POST` | `/pharmacy/dispense` | Dispenses prescription, checks inventory, triggers substitution/restock |
-| `GET` | `/patient/{patient_id}/summary` | Synthesises risk profile via `hindsight.areflect()` |
-| `GET` | `/inventory` | Returns current stock levels and reorder thresholds |
-| `POST` | `/medicines/alternatives` | AI-ranked alternative medicines checked against live stock |
-| `GET` | `/patients` | Recent patient list for the patient strip |
+| `POST` | `/auth/login` | JWT login (doctor, pharmacist, owner roles) |
+| `POST` | `/doctor/visit` | Recall memory → safety check → LLM diagnosis → save draft |
+| `POST` | `/doctor/approve` | Doctor approves (blocks on contraindicated without override) |
+| `POST` | `/doctor/reject` | Doctor rejects draft |
+| `GET` | `/pharmacy/pending` | Doctor-approved prescriptions waiting for dispensing |
+| `POST` | `/pharmacy/dispense` | Dispense, decrement stock, substitution if needed |
+| `GET` | `/patient/{id}/summary` | Hindsight `reflect()` — longitudinal risk profile |
+| `GET` | `/inventory` | Current stock levels and reorder thresholds |
+| `GET` | `/admin/audit` | Paginated audit log (owner only) |
+| `GET` | `/health` | Service health check |
 
 ---
 
-## 🔒 Security Best Practices
-- **Never commit `.env`**: Protected by `.gitignore`.
-- **Database isolation**: Patient transactions and inventories are managed in SQLite, never leaking outside local environments.
-- **Dedicated memory banks**: Each patient is siloed in their own Hindsight bank (`bank_id = patient_id`).
-- **No secrets in logs**: API keys and tokens are never printed or logged, even on error paths.
+## 🔒 Security
+- `.env` is in `.gitignore` — never committed.
+- JWT authentication with bcrypt password hashing.
+- Role-based access control (doctor / pharmacist / owner).
+- Per-IP rate limiting on login and LLM endpoints.
+- Generic error messages — no stack traces leak to clients.
+- Patient memory isolated per Hindsight bank — no cross-patient recall.
+- Deterministic safety checker runs independently of the LLM.
+- All critical actions written to audit log.
+
+---
+
+## 📜 License
+
+MIT — see [LICENSE](LICENSE).

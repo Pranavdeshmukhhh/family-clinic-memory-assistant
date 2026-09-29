@@ -46,6 +46,12 @@ async def patient_summary(
         if "404" in str(exc) or "not found" in str(exc).lower():
             raise HTTPException(404, f"No memory bank found for patient {patient_id}")
         log.error("❌ Reflect error │ %s", exc)
-        raise HTTPException(500, "Could not retrieve patient summary")
+        return {
+            "patient_id": patient_id,
+            "summary": (
+                "AI summary temporarily unavailable. Please review the patient's "
+                "visit history manually. (Hindsight service error)"
+            ),
+        }
     finally:
         await h.aclose()

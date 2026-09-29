@@ -194,7 +194,7 @@ def check_prescription(
 
         drug_groups = set(entry.get("allergen_groups", []))
 
-        # 2. Direct allergy
+        # 2. Direct allergy (exact drug name match)
         if drug in norm_allergies:
             findings.append(Finding(
                 severity="contraindicated",
@@ -203,6 +203,19 @@ def check_prescription(
                 reason=(
                     f"Patient has a documented allergy to {drug}. "
                     "Administration is contraindicated."
+                ),
+            ))
+
+        # 2b. Allergen-group allergy (e.g. allergy to "penicillin" blocks amoxicillin)
+        elif drug_groups & patient_allergen_groups:
+            matched_groups = drug_groups & patient_allergen_groups
+            findings.append(Finding(
+                severity="contraindicated",
+                type=FindingType.ALLERGY,
+                drug=drug,
+                reason=(
+                    f"Patient has a documented allergy to {', '.join(sorted(matched_groups))} group. "
+                    f"{drug} belongs to this group — administration is contraindicated."
                 ),
             ))
 
