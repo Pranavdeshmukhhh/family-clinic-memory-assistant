@@ -83,6 +83,14 @@ def init_db():
         )
     """)
 
+    # Marker table so we only seed Hindsight banks once per patient
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS seeded_patients (
+            patient_id TEXT PRIMARY KEY,
+            seeded_at  TEXT NOT NULL
+        )
+    """)
+
     # Seed inventory (only if empty)
     cur.execute("SELECT COUNT(*) FROM inventory")
     if cur.fetchone()[0] == 0:
@@ -208,32 +216,61 @@ def init_db():
     conn.close()
 
 
+def _is_patient_seeded(patient_id: str) -> bool:
+    """Return True if this patient's seed has already been retained in Hindsight."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT 1 FROM seeded_patients WHERE patient_id = ?", (patient_id,)
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+
+def _mark_patient_seeded(patient_id: str):
+    """Record that this patient's seed has been retained."""
+    conn = get_db()
+    conn.execute(
+        "INSERT OR IGNORE INTO seeded_patients (patient_id, seeded_at) VALUES (?, ?)",
+        (patient_id, datetime.datetime.now().isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
 async def _seed_one_patient(bank_id: str, name: str, seed_content: str):
     """
-    Always try create_bank first (ignore 'already exists' errors),
-    then always retain the seed content. Logs clearly at each step.
+    Idempotent seed: create the Hindsight bank (ignore 'already exists'),
+    then retain seed content only once — guarded by a local SQLite marker.
+    Logs clearly: bank created / bank already existed / seed retained / seed skipped.
+    No API keys or tokens are ever logged.
     """
     h = get_hindsight()
     try:
+        # ── Step 1: Create the bank (idempotent) ──
         try:
             await h.acreate_bank(bank_id=bank_id, name=name)
-            log.info("🧠 Created Hindsight bank for %s", bank_id)
+            log.info("🧠 Bank created for %s", bank_id)
         except Exception as e:
             err_str = str(e).lower()
             if "already exists" in err_str or "conflict" in err_str or "409" in err_str:
-                log.info("🧠 Bank already exists for %s — skipping create", bank_id)
+                log.info("🧠 Bank already existed for %s — skipping create", bank_id)
             else:
-                log.warning("⚠️  create_bank for %s: %s", bank_id, e)
+                log.warning("⚠️  create_bank for %s raised unexpected error (type=%s)", bank_id, type(e).__name__)
 
-        try:
-            await h.aretain(
-                bank_id=bank_id,
-                content=seed_content,
-                context="doctor_visit",
-            )
-            log.info("🧠 Retained seed history for %s", bank_id)
-        except Exception as e:
-            log.warning("⚠️  retain seed for %s: %s", bank_id, e)
+        # ── Step 2: Retain seed only if not done before ──
+        if _is_patient_seeded(bank_id):
+            log.info("🧠 Seed skipped for %s — already retained in a previous run", bank_id)
+        else:
+            try:
+                await h.aretain(
+                    bank_id=bank_id,
+                    content=seed_content,
+                    context="doctor_visit",
+                )
+                _mark_patient_seeded(bank_id)
+                log.info("🧠 Seed retained for %s", bank_id)
+            except Exception as e:
+                log.warning("⚠️  retain seed for %s raised error (type=%s)", bank_id, type(e).__name__)
     finally:
         await h.aclose()
 
@@ -339,9 +376,9 @@ async def _recall_patient(patient_id: str, query: str) -> tuple[str, bool]:
                 await h.acreate_bank(bank_id=patient_id, name=f"Patient {patient_id}")
                 log.info("🧠 Created new bank for %s", patient_id)
             except Exception as ce:
-                log.warning("⚠️  create_bank %s: %s", patient_id, ce)
+                log.warning("⚠️  create_bank %s raised error (type=%s)", patient_id, type(ce).__name__)
             return "", True
-        log.error("❌ RECALL error │ patient=%s │ %s", patient_id, e)
+        log.error("❌ RECALL error │ patient=%s │ type=%s", patient_id, type(e).__name__)
         raise
     finally:
         await h.aclose()
@@ -357,7 +394,7 @@ async def _retain_patient(patient_id: str, content: str, context: str):
             patient_id, context, content,
         )
     except Exception as e:
-        log.error("❌ RETAIN error │ patient=%s │ %s", patient_id, e)
+        log.error("❌ RETAIN error │ patient=%s │ type=%s", patient_id, type(e).__name__)
         raise
     finally:
         await h.aclose()
