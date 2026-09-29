@@ -1,5 +1,5 @@
-﻿"""
-Family Clinic Memory Assistant ΓÇö Backend
+"""
+Family Clinic Memory Assistant — Backend
 FastAPI server with Hindsight memory, Groq LLM, SQLite storage, and Telegram alerts.
 """
 
@@ -23,15 +23,15 @@ from typing import Optional
 from hindsight_client import Hindsight
 from groq import Groq
 
-# ΓöÇΓöÇ Logging ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Logging ─────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s Γöé %(levelname)-7s Γöé %(message)s",
+    format="%(asctime)s │ %(levelname)-7s │ %(message)s",
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger("clinic")
 
-# ΓöÇΓöÇ Env ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Env ─────────────────────────────────────────────────────────────────────
 load_dotenv()
 
 HINDSIGHT_API_KEY = os.getenv("HINDSIGHT_API_KEY", "")
@@ -42,13 +42,13 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 GROQ_MODEL = "openai/gpt-oss-120b"
 
-# ΓöÇΓöÇ Clients ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Clients ─────────────────────────────────────────────────────────────────
 def get_hindsight() -> Hindsight:
     return Hindsight(base_url=HINDSIGHT_BASE_URL, api_key=HINDSIGHT_API_KEY)
 
 groq_client = Groq(api_key=GROQ_API_KEY) if (GROQ_API_KEY and not GROQ_API_KEY.startswith("your_")) else None
 
-# ΓöÇΓöÇ SQLite ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── SQLite ──────────────────────────────────────────────────────────────────
 DB_PATH = "clinic.db"
 
 
@@ -94,66 +94,88 @@ def init_db():
             ("Cetirizine 10mg", 60, 12),
             ("Atorvastatin 10mg", 25, 5),
             ("Ibuprofen 400mg", 45, 10),
-            ("Lisinopril 5mg", 3, 5),  # intentionally low ΓÇö test restock
+            ("Lisinopril 5mg", 3, 5),  # intentionally low — test restock
         ]
         cur.executemany(
             "INSERT INTO inventory (medicine_name, quantity, reorder_threshold) VALUES (?,?,?)",
             seed_meds,
         )
-        log.info("≡ƒôª Seeded %d medicines into inventory", len(seed_meds))
+        log.info("📦 Seeded %d medicines into inventory", len(seed_meds))
 
     conn.commit()
     conn.close()
 
 
-async def seed_patient_memory():
-    """Ensure patient_001 bank exists with one historical visit."""
-    bank_id = "patient_001"
+async def _seed_one_patient(bank_id: str, name: str, seed_content: str):
+    """
+    Always try create_bank first (ignore 'already exists' errors),
+    then always retain the seed content. Logs clearly at each step.
+    """
     h = get_hindsight()
     try:
-        await h.arecall(bank_id=bank_id, query="medical history")
-        log.info("≡ƒºá patient_001 bank already exists ΓÇö skipping seed")
-    except Exception:
-        # Bank doesn't exist yet ΓÇö create and seed
         try:
-            await h.acreate_bank(bank_id=bank_id, name="Patient patient_001")
-            log.info("≡ƒºá Created Hindsight bank for patient_001")
+            await h.acreate_bank(bank_id=bank_id, name=name)
+            log.info("🧠 Created Hindsight bank for %s", bank_id)
         except Exception as e:
-            log.warning("ΓÜá∩╕Å  create_bank for patient_001: %s", e)
+            err_str = str(e).lower()
+            if "already exists" in err_str or "conflict" in err_str or "409" in err_str:
+                log.info("🧠 Bank already exists for %s — skipping create", bank_id)
+            else:
+                log.warning("⚠️  create_bank for %s: %s", bank_id, e)
 
-        seed_content = (
-            f"Patient visited on 2026-09-15. "
-            f"Presented with elevated blood sugar levels (fasting glucose 180 mg/dL). "
-            f"Diagnosed with Type 2 Diabetes Mellitus. "
-            f"Prescribed Metformin 500mg twice daily after meals. "
-            f"No known drug allergies. Currently not on any other medications. "
-            f"Advised dietary modifications and follow-up in 2 weeks."
-        )
         try:
             await h.aretain(
                 bank_id=bank_id,
                 content=seed_content,
                 context="doctor_visit",
             )
-            log.info("≡ƒºá Retained seed visit for patient_001")
+            log.info("🧠 Retained seed history for %s", bank_id)
         except Exception as e:
-            log.warning("ΓÜá∩╕Å  retain seed for patient_001: %s", e)
+            log.warning("⚠️  retain seed for %s: %s", bank_id, e)
     finally:
         await h.aclose()
 
 
-# ΓöÇΓöÇ Lifespan ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+async def seed_patient_memory():
+    """Seed Hindsight banks for demo patients on startup."""
+    await _seed_one_patient(
+        bank_id="patient_001",
+        name="Patient Rajesh Kumar",
+        seed_content=(
+            "Patient Rajesh Kumar, age 54. Visited on 2026-08-10. "
+            "Presented with elevated fasting glucose (168 mg/dL) and fatigue. "
+            "Diagnosed with Type 2 Diabetes Mellitus. "
+            "Prescribed Metformin 500mg twice daily. "
+            "Patient reported a known penicillin allergy (developed hives after Amoxicillin in 2019). "
+            "No other medications currently."
+        ),
+    )
+    await _seed_one_patient(
+        bank_id="patient_002",
+        name="Patient Meera Iyer",
+        seed_content=(
+            "Patient Meera Iyer, age 29. Visited on 2026-09-20. "
+            "Presented with hypertension symptoms, blood pressure 148/94. "
+            "Diagnosed with Stage 1 Hypertension. "
+            "Prescribed Lisinopril 5mg once daily. "
+            "No known drug allergies. No other current medications."
+        ),
+    )
+
+
+# ── Lifespan ────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log.info("🔗 HINDSIGHT_BASE_URL = %s", HINDSIGHT_BASE_URL)
     init_db()
     await seed_patient_memory()
-    log.info("Γ£à Clinic backend ready")
+    log.info("✅ Clinic backend ready")
     yield
 
 
 app = FastAPI(title="Family Clinic Memory Assistant", lifespan=lifespan)
 
-# ΓöÇΓöÇ Static files ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Static files ────────────────────────────────────────────────────────────
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -164,7 +186,7 @@ async def serve_frontend():
     return FileResponse(str(STATIC_DIR / "index.html"))
 
 
-# ΓöÇΓöÇ Pydantic models ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Pydantic models ────────────────────────────────────────────────────────
 class VisitRequest(BaseModel):
     patient_id: str
     symptoms: str
@@ -176,7 +198,7 @@ class DispenseRequest(BaseModel):
     prescription_id: str
 
 
-# ΓöÇΓöÇ Helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+# ── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _recall_patient(patient_id: str, query: str) -> tuple[str, bool]:
     """
@@ -188,7 +210,7 @@ async def _recall_patient(patient_id: str, query: str) -> tuple[str, bool]:
         resp = await h.arecall(bank_id=patient_id, query=query)
         facts = [r.text for r in resp.results] if resp.results else []
         log.info(
-            "≡ƒöì RECALL  Γöé patient=%s Γöé query=%s Γöé results=%d Γöé facts=%s",
+            "🔍 RECALL  │ patient=%s │ query=%s │ results=%d │ facts=%s",
             patient_id, query, len(facts), facts,
         )
         if facts:
@@ -196,14 +218,14 @@ async def _recall_patient(patient_id: str, query: str) -> tuple[str, bool]:
         return "", False
     except Exception as e:
         if "404" in str(e) or "not found" in str(e).lower():
-            log.info("≡ƒåò RECALL  Γöé patient=%s Γöé Bank not found ΓÇö new patient", patient_id)
+            log.info("🆕 RECALL  │ patient=%s │ Bank not found — new patient", patient_id)
             try:
                 await h.acreate_bank(bank_id=patient_id, name=f"Patient {patient_id}")
-                log.info("≡ƒºá Created new bank for %s", patient_id)
+                log.info("🧠 Created new bank for %s", patient_id)
             except Exception as ce:
-                log.warning("ΓÜá∩╕Å  create_bank %s: %s", patient_id, ce)
+                log.warning("⚠️  create_bank %s: %s", patient_id, ce)
             return "", True
-        log.error("Γ¥î RECALL error Γöé patient=%s Γöé %s", patient_id, e)
+        log.error("❌ RECALL error │ patient=%s │ %s", patient_id, e)
         raise
     finally:
         await h.aclose()
@@ -215,11 +237,11 @@ async def _retain_patient(patient_id: str, content: str, context: str):
     try:
         await h.aretain(bank_id=patient_id, content=content, context=context)
         log.info(
-            "≡ƒÆ╛ RETAIN  Γöé patient=%s Γöé context=%s Γöé content_preview=%.120sΓÇª",
+            "💾 RETAIN  │ patient=%s │ context=%s │ content_preview=%.120s…",
             patient_id, context, content,
         )
     except Exception as e:
-        log.error("Γ¥î RETAIN error Γöé patient=%s Γöé %s", patient_id, e)
+        log.error("❌ RETAIN error │ patient=%s │ %s", patient_id, e)
         raise
     finally:
         await h.aclose()
@@ -240,10 +262,10 @@ def _groq_chat(system_prompt: str, user_prompt: str) -> str:
             )
             return completion.choices[0].message.content
         except Exception as e:
-            log.warning("ΓÜá∩╕Å Groq API call error (%s). Falling back to clinical decision logic.", e)
+            log.warning("⚠️ Groq API call error (%s). Falling back to clinical decision logic.", e)
 
-    # ΓöÇΓöÇ Fallback Clinical Rule Engine (if GROQ_API_KEY is not set) ΓöÇΓöÇ
-    log.info("≡ƒ⌐║ Using built-in clinical rule engine (Groq key not configured or call failed)")
+    # ── Fallback Clinical Rule Engine (if GROQ_API_KEY is not set) ──
+    log.info("🩺 Using built-in clinical rule engine (Groq key not configured or call failed)")
     prompt_lower = (user_prompt + " " + system_prompt).lower()
 
     # Case 1: Pharmacy Substitution
@@ -321,7 +343,7 @@ def _get_in_stock_medicines() -> list[str]:
 
 
 def _check_restock(medicine_name: str):
-    """MODULE 4 ΓÇö Check if below threshold and trigger alerts."""
+    """MODULE 4 — Check if below threshold and trigger alerts."""
     conn = get_db()
     row = conn.execute(
         "SELECT quantity, reorder_threshold FROM inventory WHERE medicine_name = ?",
@@ -335,7 +357,7 @@ def _check_restock(medicine_name: str):
     qty = row["quantity"]
     threshold = row["reorder_threshold"]
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    alert_line = f"{now} ΓÇö {medicine_name} ΓÇö qty: {qty} (below threshold {threshold})"
+    alert_line = f"{now} — {medicine_name} — qty: {qty} (below threshold {threshold})"
 
     # --- File alert ---
     stores_dir = pathlib.Path("stores")
@@ -352,16 +374,16 @@ def _check_restock(medicine_name: str):
     if not already_flagged:
         with open(req_file, "a") as f:
             f.write(alert_line + "\n")
-        log.warning("≡ƒôï RESTOCK FILE Γöé %s", alert_line)
+        log.warning("📋 RESTOCK FILE │ %s", alert_line)
 
         # --- Telegram alert ---
         if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
             _send_telegram(
-                f"ΓÜá∩╕Å *Low Stock Alert*\n\n"
-                f"≡ƒÆè *{medicine_name}*\n"
-                f"≡ƒôë Current qty: {qty}\n"
-                f"≡ƒö╗ Threshold: {threshold}\n"
-                f"≡ƒòÉ {now}"
+                f"⚠️ *Low Stock Alert*\n\n"
+                f"💊 *{medicine_name}*\n"
+                f"📉 Current qty: {qty}\n"
+                f"🔻 Threshold: {threshold}\n"
+                f"🕐 {now}"
             )
 
 
@@ -375,16 +397,16 @@ def _send_telegram(text: str):
             "parse_mode": "Markdown",
         }, timeout=10)
         if resp.status_code == 200:
-            log.info("≡ƒô¿ Telegram alert sent")
+            log.info("📨 Telegram alert sent")
         else:
-            log.warning("ΓÜá∩╕Å  Telegram response: %s", resp.text)
+            log.warning("⚠️  Telegram response: %s", resp.text)
     except Exception as e:
-        log.error("Γ¥î Telegram error: %s", e)
+        log.error("❌ Telegram error: %s", e)
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-#  CORE ΓÇö POST /doctor/visit
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
+#  CORE — POST /doctor/visit
+# ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/doctor/visit")
 async def doctor_visit(req: VisitRequest):
@@ -392,7 +414,7 @@ async def doctor_visit(req: VisitRequest):
     symptoms = req.symptoms.strip()
     notes = (req.notes or "").strip()
 
-    # ΓöÇΓöÇ Step 1: Recall patient history (unless memory disabled ΓÇö MODULE 2) ΓöÇΓöÇ
+    # ── Step 1: Recall patient history (unless memory disabled — MODULE 2) ──
     history_text = ""
     is_new_patient = False
     memory_used = "Memory disabled (use_memory=false)"
@@ -400,13 +422,13 @@ async def doctor_visit(req: VisitRequest):
     if req.use_memory:
         history_text, is_new_patient = await _recall_patient(patient_id, symptoms)
         if is_new_patient:
-            memory_used = "No prior history ΓÇö first visit (new patient bank created)"
+            memory_used = "No prior history — first visit (new patient bank created)"
         elif not history_text:
             memory_used = "Bank exists but no relevant memories found for this query"
         else:
             memory_used = history_text
 
-    # ΓöÇΓöÇ Step 1b: Recall allergies & current meds (MODULE 1) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 1b: Recall allergies & current meds (MODULE 1) ────────────────
     allergy_info = ""
     if req.use_memory:
         h_allergy = get_hindsight()
@@ -419,18 +441,18 @@ async def doctor_visit(req: VisitRequest):
             if allergy_facts:
                 allergy_info = "\n".join(allergy_facts)
                 log.info(
-                    "≡ƒöì RECALL (allergies) Γöé patient=%s Γöé facts=%s",
+                    "🔍 RECALL (allergies) │ patient=%s │ facts=%s",
                     patient_id, allergy_facts,
                 )
         except Exception:
-            pass  # non-critical ΓÇö new patient won't have allergy data
+            pass  # non-critical — new patient won't have allergy data
         finally:
             await h_allergy.aclose()
 
-    # ΓöÇΓöÇ Step 2: Groq ΓÇö diagnosis + prescription ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 2: Groq — diagnosis + prescription ────────────────────────────
     history_block = (
         f"PATIENT HISTORY:\n{history_text}" if history_text
-        else "PATIENT HISTORY: No prior history ΓÇö this is the patient's first visit."
+        else "PATIENT HISTORY: No prior history — this is the patient's first visit."
     )
 
     allergy_block = (
@@ -445,7 +467,7 @@ async def doctor_visit(req: VisitRequest):
         "1. A suggested diagnosis\n"
         "2. A single primary prescription (medicine name, dosage, instructions)\n"
         "3. Brief clinical reasoning referencing past visits when available\n"
-        "4. A 'warning' field ΓÇö if the prescribed medicine could conflict with any "
+        "4. A 'warning' field — if the prescribed medicine could conflict with any "
         "known allergies, current medications, or prior adverse reactions listed in the "
         "patient's history, state the conflict clearly. If no conflict, set warning to null.\n\n"
         "Respond in JSON format:\n"
@@ -483,7 +505,7 @@ async def doctor_visit(req: VisitRequest):
             "warning": None,
         }
 
-    # ΓöÇΓöÇ Step 3: Create prescription ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 3: Create prescription ────────────────────────────────────────
     rx_id = f"rx_{uuid.uuid4().hex[:8]}"
     medicine_name = ai_result.get("medicine_name", "Unknown")
     dosage = ai_result.get("dosage", "As directed")
@@ -504,7 +526,7 @@ async def doctor_visit(req: VisitRequest):
     conn.commit()
     conn.close()
 
-    # ΓöÇΓöÇ Step 4: Retain visit into Hindsight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 4: Retain visit into Hindsight ────────────────────────────────
     if req.use_memory:
         retain_content = (
             f"Visit on {datetime.datetime.now().strftime('%Y-%m-%d')}. "
@@ -516,7 +538,7 @@ async def doctor_visit(req: VisitRequest):
         )
         await _retain_patient(patient_id, retain_content, "doctor_visit")
 
-    # ΓöÇΓöÇ Step 5 & 6: Return response ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 5 & 6: Return response ───────────────────────────────────────
     return {
         "prescription": {
             "prescription_id": rx_id,
@@ -535,9 +557,9 @@ async def doctor_visit(req: VisitRequest):
     }
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-#  CORE ΓÇö GET /pharmacy/pending
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
+#  CORE — GET /pharmacy/pending
+# ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/pharmacy/pending")
 async def pharmacy_pending():
@@ -549,9 +571,9 @@ async def pharmacy_pending():
     return {"pending": [dict(r) for r in rows]}
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-#  CORE ΓÇö POST /pharmacy/dispense
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
+#  CORE — POST /pharmacy/dispense
+# ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/pharmacy/dispense")
 async def pharmacy_dispense(req: DispenseRequest):
@@ -573,7 +595,7 @@ async def pharmacy_dispense(req: DispenseRequest):
     medicine_name = rx["medicine_name"]
     dosage = rx["dosage"]
 
-    # ΓöÇΓöÇ Step 2: Recall patient context for pharmacist ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 2: Recall patient context for pharmacist ──────────────────────
     patient_context = ""
     try:
         history_text, _ = await _recall_patient(patient_id, "latest prescription and history")
@@ -581,7 +603,7 @@ async def pharmacy_dispense(req: DispenseRequest):
     except Exception:
         pass
 
-    # ΓöÇΓöÇ Step 3: Check inventory ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 3: Check inventory ────────────────────────────────────────────
     inv_row = conn.execute(
         "SELECT * FROM inventory WHERE medicine_name = ?", (medicine_name,)
     ).fetchone()
@@ -591,7 +613,7 @@ async def pharmacy_dispense(req: DispenseRequest):
     stock_warning = None
 
     if inv_row and inv_row["quantity"] > 0:
-        # In stock ΓÇö dispense
+        # In stock — dispense
         new_qty = inv_row["quantity"] - 1
         conn.execute(
             "UPDATE inventory SET quantity = ? WHERE medicine_name = ?",
@@ -603,7 +625,7 @@ async def pharmacy_dispense(req: DispenseRequest):
         )
         conn.commit()
         log.info(
-            "≡ƒÆè DISPENSED Γöé %s Γöé patient=%s Γöé remaining=%d",
+            "💊 DISPENSED │ %s │ patient=%s │ remaining=%d",
             medicine_name, patient_id, new_qty,
         )
 
@@ -613,12 +635,12 @@ async def pharmacy_dispense(req: DispenseRequest):
 
         if new_qty <= (inv_row["reorder_threshold"]):
             stock_warning = (
-                f"ΓÜá∩╕Å Low stock: {medicine_name} ΓÇö {new_qty} remaining "
+                f"⚠️ Low stock: {medicine_name} — {new_qty} remaining "
                 f"(threshold: {inv_row['reorder_threshold']})"
             )
     else:
         conn.close()
-        # Out of stock ΓÇö ask Groq for alternative
+        # Out of stock — ask Groq for alternative
         in_stock = _get_in_stock_medicines()
         alt_prompt = (
             f"The prescribed medicine '{medicine_name}' is out of stock at this pharmacy. "
@@ -668,22 +690,22 @@ async def pharmacy_dispense(req: DispenseRequest):
                 conn2.commit()
                 dispensed_medicine = alternative_name
                 log.info(
-                    "≡ƒÆè DISPENSED (substitute) Γöé %s ΓåÆ %s Γöé patient=%s Γöé remaining=%d",
+                    "💊 DISPENSED (substitute) │ %s → %s │ patient=%s │ remaining=%d",
                     medicine_name, alternative_name, patient_id, new_qty,
                 )
                 _check_restock(alternative_name)
             else:
-                log.warning("ΓÜá∩╕Å  Alternative '%s' also not available", alternative_name)
+                log.warning("⚠️  Alternative '%s' also not available", alternative_name)
             conn2.close()
 
-    # ΓöÇΓöÇ Step 5: Retain dispensing into Hindsight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Step 5: Retain dispensing into Hindsight ──────────────────────────
     retain_text = (
         f"Pharmacy dispensed on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}. "
         f"Original prescription: {medicine_name} {dosage}. "
     )
     if substitution:
         retain_text += (
-            f"Out of stock ΓÇö substituted with {substitution.get('alternative', 'N/A')}. "
+            f"Out of stock — substituted with {substitution.get('alternative', 'N/A')}. "
             f"Reason: {substitution.get('reason', 'N/A')}."
         )
     else:
@@ -692,7 +714,7 @@ async def pharmacy_dispense(req: DispenseRequest):
     try:
         await _retain_patient(patient_id, retain_text, "pharmacy_dispense")
     except Exception as e:
-        log.error("Γ¥î Retain after dispense failed: %s", e)
+        log.error("❌ Retain after dispense failed: %s", e)
 
     return {
         "prescription_id": req.prescription_id,
@@ -706,9 +728,9 @@ async def pharmacy_dispense(req: DispenseRequest):
     }
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-#  MODULE 3 ΓÇö GET /patient/{patient_id}/summary
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
+#  MODULE 3 — GET /patient/{patient_id}/summary
+# ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/patient/{patient_id}/summary")
 async def patient_summary(patient_id: str):
@@ -720,29 +742,29 @@ async def patient_summary(patient_id: str):
         )
         # ReflectResponse has a .text field with the markdown summary
         summary = resp.text if hasattr(resp, 'text') else str(resp)
-        log.info("≡ƒ¬₧ REFLECT Γöé patient=%s Γöé summary_preview=%.120sΓÇª", patient_id, summary)
+        log.info("🪞 REFLECT │ patient=%s │ summary_preview=%.120s…", patient_id, summary)
         return {"patient_id": patient_id, "summary": summary}
     except Exception as e:
         if "404" in str(e) or "not found" in str(e).lower():
             raise HTTPException(404, f"No memory bank found for patient {patient_id}")
-        log.error("Γ¥î Reflect error Γöé %s", e)
+        log.error("❌ Reflect error │ %s", e)
         raise HTTPException(500, str(e))
     finally:
         await h.aclose()
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-#  Utility ΓÇö GET /inventory
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
+#  Utility — GET /inventory
+# ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/inventory")
 async def get_inventory():
     return {"inventory": _get_inventory_list()}
 
 
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
 #  Run
-# ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+# ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     import uvicorn
