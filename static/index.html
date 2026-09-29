@@ -20,6 +20,7 @@
       --green-dim: rgba(0, 206, 201, 0.15);
       --red: #ff6b6b;
       --red-dim: rgba(255, 107, 107, 0.12);
+      --red-border: rgba(255, 107, 107, 0.4);
       --orange: #fdcb6e;
       --orange-dim: rgba(253, 203, 110, 0.12);
       --radius: 12px;
@@ -112,7 +113,18 @@
       transition: border 0.2s;
     }
     input:focus, textarea:focus { border-color: var(--accent); }
+    input.input-error, textarea.input-error { border-color: var(--red); }
     textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Inline validation message ─── */
+    .field-error {
+      font-size: 12px;
+      color: var(--red);
+      margin-top: -10px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .field-error.visible { display: block; }
 
     .btn {
       padding: 10px 24px;
@@ -131,6 +143,7 @@
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-green { background: var(--green); color: var(--bg); }
     .btn-green:hover { filter: brightness(1.15); }
+    .btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── Toggle ─── */
     .toggle-row {
@@ -167,18 +180,64 @@
     .toggle input:checked + .slider { background: var(--green); }
     .toggle input:checked + .slider::before { transform: translateX(20px); }
 
-    /* ── Warning banner ─── */
+    /* ── Allergy Warning banner — visually distinct red ─── */
     .warning-banner {
-      background: var(--red-dim);
-      border: 1px solid var(--red);
+      background: rgba(255, 60, 60, 0.15);
+      border: 2px solid var(--red);
       border-radius: 8px;
-      padding: 12px 16px;
+      padding: 14px 18px;
       color: var(--red);
       font-size: 13px;
       margin-bottom: 12px;
       display: none;
+      box-shadow: 0 0 12px rgba(255, 107, 107, 0.3);
     }
-    .warning-banner.visible { display: flex; gap: 8px; align-items: flex-start; }
+    .warning-banner.visible {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      animation: pulse-warning 0.4s ease;
+    }
+    @keyframes pulse-warning {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+      100% { transform: scale(1); }
+    }
+    .warning-banner .warning-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .warning-banner strong {
+      font-size: 14px;
+      display: block;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Fetch error box ─── */
+    .fetch-error {
+      background: var(--red-dim);
+      border: 1px solid var(--red-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--red);
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+    .fetch-error.visible { display: block; }
+
+    /* ── Loading indicator ─── */
+    .loading-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+    .loading-indicator.visible { display: flex; }
 
     /* ── Result ─── */
     .result-box {
@@ -257,6 +316,7 @@
       animation: spin 0.6s linear infinite;
       margin-right: 8px;
       vertical-align: middle;
+      flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -284,10 +344,14 @@
     <h2>🩺 New Visit</h2>
 
     <label for="patient_id">Patient ID</label>
-    <input type="text" id="patient_id" placeholder="e.g. patient_001" value="patient_001">
+    <input type="text" id="patient_id" placeholder="e.g. patient_001" value="patient_001"
+           oninput="clearFieldError('patient_id', 'err-patient-id')">
+    <div id="err-patient-id" class="field-error">⚠ Please enter a Patient ID</div>
 
     <label for="symptoms">Symptoms</label>
-    <textarea id="symptoms" placeholder="Describe the patient's symptoms..."></textarea>
+    <textarea id="symptoms" placeholder="Describe the patient's symptoms..."
+              oninput="clearFieldError('symptoms', 'err-symptoms')"></textarea>
+    <div id="err-symptoms" class="field-error">⚠ Please enter symptoms before submitting</div>
 
     <label for="notes">Doctor's Notes (optional)</label>
     <textarea id="notes" placeholder="Additional observations..."></textarea>
@@ -304,13 +368,22 @@
     <button class="btn btn-primary" id="btn-compare" onclick="submitComparison()" style="margin-left:8px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent);">
       Compare With vs Without Memory
     </button>
+
+    <!-- Loading state for doctor visit -->
+    <div id="visit-loading" class="loading-indicator">
+      <span class="spinner"></span>
+      <span>Consulting AI with patient history&hellip;</span>
+    </div>
+
+    <!-- Fetch error box -->
+    <div id="visit-fetch-error" class="fetch-error"></div>
   </div>
 
-  <!-- Warning banner (MODULE 1) -->
+  <!-- Allergy Warning banner (MODULE 1) — red-tinted, prominent -->
   <div id="warning-banner" class="warning-banner">
-    <span style="font-size:18px;">⚠️</span>
+    <span class="warning-icon">⚠️</span>
     <div>
-      <strong>Drug Interaction / Allergy Warning</strong>
+      <strong>🚨 Drug Interaction / Allergy Warning</strong>
       <div id="warning-text"></div>
     </div>
   </div>
@@ -335,8 +408,13 @@
     <h2>📊 Patient Risk Profile</h2>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <input type="text" id="risk-patient-id" placeholder="patient_001" value="patient_001" style="max-width:200px; margin-bottom:0;">
-      <button class="btn btn-green" onclick="loadRiskProfile()">Load</button>
+      <button class="btn btn-green" id="btn-risk" onclick="loadRiskProfile()">Load</button>
     </div>
+    <div id="risk-loading" class="loading-indicator">
+      <span class="spinner"></span>
+      <span>Generating risk profile via Hindsight Reflect&hellip;</span>
+    </div>
+    <div id="risk-fetch-error" class="fetch-error"></div>
     <div id="risk-result" class="result-box"></div>
   </div>
 </div>
@@ -346,24 +424,76 @@
 
   <div class="card">
     <h2>💊 Pending Prescriptions</h2>
-    <button class="btn btn-primary" onclick="loadPending()" style="margin-bottom:14px;">🔄 Refresh Queue</button>
+    <button class="btn btn-primary" id="btn-refresh" onclick="loadPending()" style="margin-bottom:14px;">🔄 Refresh Queue</button>
+    <div id="pending-loading" class="loading-indicator">
+      <span class="spinner"></span>
+      <span>Loading queue&hellip;</span>
+    </div>
+    <div id="pending-fetch-error" class="fetch-error"></div>
     <div id="pending-list"></div>
   </div>
 
   <div class="card">
     <h2>📋 Dispense Result</h2>
+    <div id="dispense-loading" class="loading-indicator">
+      <span class="spinner"></span>
+      <span>Dispensing&hellip;</span>
+    </div>
+    <div id="dispense-fetch-error" class="fetch-error"></div>
     <div id="dispense-result" class="result-box"></div>
   </div>
 
   <div class="card">
     <h2>📦 Inventory</h2>
     <button class="btn btn-green" onclick="loadInventory()" style="margin-bottom:14px;">Load Inventory</button>
+    <div id="inventory-fetch-error" class="fetch-error"></div>
     <div id="inventory-list"></div>
   </div>
 </div>
 
 <script>
 const API = '';
+
+// ── Helpers ──
+function showError(elId, msg) {
+  const el = document.getElementById(elId);
+  if (el) { el.textContent = msg; el.classList.add('visible'); }
+}
+function hideError(elId) {
+  const el = document.getElementById(elId);
+  if (el) { el.textContent = ''; el.classList.remove('visible'); }
+}
+function showLoading(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.classList.add('visible');
+}
+function hideLoading(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.classList.remove('visible');
+}
+function clearFieldError(inputId, errId) {
+  document.getElementById(inputId).classList.remove('input-error');
+  document.getElementById(errId).classList.remove('visible');
+}
+
+// ── Input validation ──
+function validateVisitForm() {
+  const patientId = document.getElementById('patient_id').value.trim();
+  const symptoms  = document.getElementById('symptoms').value.trim();
+  let valid = true;
+
+  if (!patientId) {
+    document.getElementById('patient_id').classList.add('input-error');
+    document.getElementById('err-patient-id').classList.add('visible');
+    valid = false;
+  }
+  if (!symptoms) {
+    document.getElementById('symptoms').classList.add('input-error');
+    document.getElementById('err-symptoms').classList.add('visible');
+    valid = false;
+  }
+  return valid;
+}
 
 // ── Tab switching ──
 function switchTab(tab) {
@@ -377,13 +507,18 @@ function switchTab(tab) {
 
 // ── Doctor: Submit Visit ──
 async function submitVisit() {
+  if (!validateVisitForm()) return;
+
   const btn = document.getElementById('btn-visit');
+  const btnCompare = document.getElementById('btn-compare');
   const resultBox = document.getElementById('visit-result');
   const warningBanner = document.getElementById('warning-banner');
   const comparisonContainer = document.getElementById('comparison-container');
 
   comparisonContainer.style.display = 'none';
   warningBanner.classList.remove('visible');
+  resultBox.classList.remove('visible');
+  hideError('visit-fetch-error');
 
   const payload = {
     patient_id: document.getElementById('patient_id').value.trim(),
@@ -392,14 +527,9 @@ async function submitVisit() {
     use_memory: document.getElementById('use_memory').checked,
   };
 
-  if (!payload.patient_id || !payload.symptoms) {
-    alert('Please enter Patient ID and Symptoms');
-    return;
-  }
-
   btn.disabled = true;
-  resultBox.innerHTML = '<span class="spinner"></span><span class="loading-text">Consulting AI with patient history...</span>';
-  resultBox.classList.add('visible');
+  btnCompare.disabled = true;
+  showLoading('visit-loading');
 
   try {
     const res = await fetch(`${API}/doctor/visit`, {
@@ -407,6 +537,14 @@ async function submitVisit() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+
+    if (!res.ok) {
+      let detail = `Server error ${res.status}`;
+      try { const e = await res.json(); detail = e.detail || JSON.stringify(e); } catch {}
+      showError('visit-fetch-error', `❌ ${detail}`);
+      return;
+    }
+
     const data = await res.json();
 
     // Show warning (MODULE 1)
@@ -416,15 +554,22 @@ async function submitVisit() {
     }
 
     resultBox.innerHTML = formatVisitResult(data);
+    resultBox.classList.add('visible');
   } catch (err) {
-    resultBox.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    showError('visit-fetch-error', `❌ Network error: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btnCompare.disabled = false;
+    hideLoading('visit-loading');
   }
-  btn.disabled = false;
 }
 
 // ── Doctor: Compare with/without memory (MODULE 2) ──
 async function submitComparison() {
+  if (!validateVisitForm()) return;
+
   const btn = document.getElementById('btn-compare');
+  const btnVisit = document.getElementById('btn-visit');
   const resultBox = document.getElementById('visit-result');
   const comparisonContainer = document.getElementById('comparison-container');
   const warningBanner = document.getElementById('warning-banner');
@@ -433,6 +578,7 @@ async function submitComparison() {
 
   resultBox.classList.remove('visible');
   warningBanner.classList.remove('visible');
+  hideError('visit-fetch-error');
 
   const payload = {
     patient_id: document.getElementById('patient_id').value.trim(),
@@ -440,29 +586,34 @@ async function submitComparison() {
     notes: document.getElementById('notes').value.trim(),
   };
 
-  if (!payload.patient_id || !payload.symptoms) {
-    alert('Please enter Patient ID and Symptoms');
-    return;
-  }
-
   btn.disabled = true;
+  btnVisit.disabled = true;
   comparisonContainer.style.display = 'grid';
-  resultWith.innerHTML = '<span class="spinner"></span><span class="loading-text">With memory...</span>';
-  resultWithout.innerHTML = '<span class="spinner"></span><span class="loading-text">Without memory...</span>';
+  resultWith.innerHTML = '<span class="spinner"></span><span class="loading-text">With memory…</span>';
+  resultWithout.innerHTML = '<span class="spinner"></span><span class="loading-text">Without memory…</span>';
 
   try {
-    const [resWith, resWithout] = await Promise.all([
+    const [resA, resB] = await Promise.all([
       fetch(`${API}/doctor/visit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, use_memory: true }),
-      }).then(r => r.json()),
+      }),
       fetch(`${API}/doctor/visit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...payload, use_memory: false }),
-      }).then(r => r.json()),
+      }),
     ]);
+
+    if (!resA.ok || !resB.ok) {
+      const detail = `Server error ${resA.ok ? resB.status : resA.status}`;
+      resultWith.innerHTML = `<span style="color:var(--red);">${detail}</span>`;
+      resultWithout.innerHTML = '';
+      return;
+    }
+
+    const [resWith, resWithout] = await Promise.all([resA.json(), resB.json()]);
 
     resultWith.innerHTML = formatVisitResult(resWith);
     resultWithout.innerHTML = formatVisitResult(resWithout);
@@ -472,10 +623,12 @@ async function submitComparison() {
       warningBanner.classList.add('visible');
     }
   } catch (err) {
-    resultWith.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    resultWith.innerHTML = `<span style="color:var(--red);">❌ Network error: ${err.message}</span>`;
     resultWithout.innerHTML = '';
+  } finally {
+    btn.disabled = false;
+    btnVisit.disabled = false;
   }
-  btn.disabled = false;
 }
 
 function formatVisitResult(data) {
@@ -484,6 +637,9 @@ function formatVisitResult(data) {
     : '<span class="tag tag-orange">🚫 Memory OFF</span>';
   const newTag = data.is_new_patient
     ? '<span class="tag tag-orange">New Patient</span>' : '';
+
+  const memUsed = data.memory_used || 'None';
+  const memDisplay = memUsed.length > 200 ? memUsed.substring(0, 200) + '…' : memUsed;
 
   return `
     ${memTag}${newTag}
@@ -496,7 +652,7 @@ function formatVisitResult(data) {
 
     <strong>Reasoning:</strong> ${data.ai_reasoning || 'N/A'}
 
-    <strong>Memory Used:</strong> ${data.memory_used || 'None'}
+    <strong>Memory Used:</strong> ${memDisplay}
 
     ✅ Prescription sent to pharmacy queue (status: pending)
   `;
@@ -505,14 +661,24 @@ function formatVisitResult(data) {
 // ── Pharmacy: Load pending ──
 async function loadPending() {
   const container = document.getElementById('pending-list');
-  container.innerHTML = '<span class="spinner"></span><span class="loading-text">Loading...</span>';
+  const btn = document.getElementById('btn-refresh');
+  container.innerHTML = '';
+  hideError('pending-fetch-error');
+  showLoading('pending-loading');
+  if (btn) btn.disabled = true;
 
   try {
     const res = await fetch(`${API}/pharmacy/pending`);
+    if (!res.ok) {
+      let detail = `Server error ${res.status}`;
+      try { const e = await res.json(); detail = e.detail || JSON.stringify(e); } catch {}
+      showError('pending-fetch-error', `❌ ${detail}`);
+      return;
+    }
     const data = await res.json();
 
     if (!data.pending || data.pending.length === 0) {
-      container.innerHTML = '<div class="empty-state">No pending prescriptions 🎉</div>';
+      container.innerHTML = '<div class="empty-state">✅ No pending prescriptions right now</div>';
       return;
     }
 
@@ -523,19 +689,26 @@ async function loadPending() {
           <div class="rx-med">💊 ${rx.medicine_name} — ${rx.dosage}</div>
           <div class="rx-patient">Patient: ${rx.patient_id}</div>
         </div>
-        <button class="btn btn-green" onclick="dispense('${rx.prescription_id}')">Dispense</button>
+        <button class="btn btn-green" id="dispense-btn-${rx.prescription_id}"
+                onclick="dispense('${rx.prescription_id}')">Dispense</button>
       </div>
     `).join('');
   } catch (err) {
-    container.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    showError('pending-fetch-error', `❌ Network error: ${err.message}`);
+  } finally {
+    hideLoading('pending-loading');
+    if (btn) btn.disabled = false;
   }
 }
 
 // ── Pharmacy: Dispense ──
 async function dispense(rxId) {
   const resultBox = document.getElementById('dispense-result');
-  resultBox.innerHTML = '<span class="spinner"></span><span class="loading-text">Dispensing...</span>';
-  resultBox.classList.add('visible');
+  const dispenseBtn = document.getElementById(`dispense-btn-${rxId}`);
+  resultBox.classList.remove('visible');
+  hideError('dispense-fetch-error');
+  showLoading('dispense-loading');
+  if (dispenseBtn) dispenseBtn.disabled = true;
 
   try {
     const res = await fetch(`${API}/pharmacy/dispense`, {
@@ -543,6 +716,14 @@ async function dispense(rxId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prescription_id: rxId }),
     });
+
+    if (!res.ok) {
+      let detail = `Server error ${res.status}`;
+      try { const e = await res.json(); detail = e.detail || JSON.stringify(e); } catch {}
+      showError('dispense-fetch-error', `❌ ${detail}`);
+      return;
+    }
+
     const data = await res.json();
 
     let html = `
@@ -571,19 +752,31 @@ async function dispense(rxId) {
     }
 
     resultBox.innerHTML = html;
+    resultBox.classList.add('visible');
     loadPending(); // refresh queue
   } catch (err) {
-    resultBox.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    showError('dispense-fetch-error', `❌ Network error: ${err.message}`);
+  } finally {
+    hideLoading('dispense-loading');
+    if (dispenseBtn) dispenseBtn.disabled = false;
   }
 }
 
 // ── Inventory ──
 async function loadInventory() {
   const container = document.getElementById('inventory-list');
-  container.innerHTML = '<span class="spinner"></span><span class="loading-text">Loading...</span>';
+  container.innerHTML = '<span class="spinner"></span><span class="loading-text">Loading…</span>';
+  hideError('inventory-fetch-error');
 
   try {
     const res = await fetch(`${API}/inventory`);
+    if (!res.ok) {
+      let detail = `Server error ${res.status}`;
+      try { const e = await res.json(); detail = e.detail || JSON.stringify(e); } catch {}
+      container.innerHTML = '';
+      showError('inventory-fetch-error', `❌ ${detail}`);
+      return;
+    }
     const data = await res.json();
 
     container.innerHTML = `<table style="width:100%; font-size:13px; border-collapse:collapse;">
@@ -604,7 +797,8 @@ async function loadInventory() {
       }).join('')}
     </table>`;
   } catch (err) {
-    container.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    container.innerHTML = '';
+    showError('inventory-fetch-error', `❌ Network error: ${err.message}`);
   }
 }
 
@@ -612,23 +806,38 @@ async function loadInventory() {
 async function loadRiskProfile() {
   const patientId = document.getElementById('risk-patient-id').value.trim();
   const resultBox = document.getElementById('risk-result');
+  const btn = document.getElementById('btn-risk');
 
-  if (!patientId) { alert('Enter a patient ID'); return; }
+  if (!patientId) {
+    showError('risk-fetch-error', '⚠ Please enter a patient ID');
+    return;
+  }
 
-  resultBox.innerHTML = '<span class="spinner"></span><span class="loading-text">Generating risk profile via Hindsight Reflect...</span>';
-  resultBox.classList.add('visible');
+  resultBox.classList.remove('visible');
+  hideError('risk-fetch-error');
+  showLoading('risk-loading');
+  btn.disabled = true;
 
   try {
     const res = await fetch(`${API}/patient/${patientId}/summary`);
     if (!res.ok) {
-      const err = await res.json();
-      resultBox.innerHTML = `<span style="color:var(--red);">Error: ${err.detail}</span>`;
+      let detail = `Server error ${res.status}`;
+      try { const e = await res.json(); detail = e.detail || JSON.stringify(e); } catch {}
+      if (res.status === 404) {
+        showError('risk-fetch-error', `ℹ No history yet for patient "${patientId}"`);
+      } else {
+        showError('risk-fetch-error', `❌ ${detail}`);
+      }
       return;
     }
     const data = await res.json();
     resultBox.innerHTML = `<span class="tag tag-purple">🪞 Reflect Summary</span>\n\n${data.summary}`;
+    resultBox.classList.add('visible');
   } catch (err) {
-    resultBox.innerHTML = `<span style="color:var(--red);">Error: ${err.message}</span>`;
+    showError('risk-fetch-error', `❌ Network error: ${err.message}`);
+  } finally {
+    hideLoading('risk-loading');
+    btn.disabled = false;
   }
 }
 
