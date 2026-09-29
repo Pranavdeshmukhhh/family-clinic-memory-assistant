@@ -5,3 +5,8 @@ groq
 python-dotenv
 httpx
 aiosqlite
+pydantic-settings>=2.0
+# dev / test (install via: pip install -e ".[dev]" or pip install pytest ruff mypy)
+# pytest>=8.0
+# ruff>=0.4
+# mypy>=1.10
