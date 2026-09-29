@@ -6,7 +6,13 @@ python-dotenv
 httpx
 aiosqlite
 pydantic-settings>=2.0
-# dev / test (install via: pip install -e ".[dev]" or pip install pytest ruff mypy)
+# Auth
+passlib[bcrypt]
+bcrypt>=4.0,<5        # passlib 1.7.4 is incompatible with bcrypt 5.x
+python-jose[cryptography]
+# Rate limiting
+slowapi
+# dev / test (install via: pip install pytest ruff mypy)
 # pytest>=8.0
 # ruff>=0.4
 # mypy>=1.10

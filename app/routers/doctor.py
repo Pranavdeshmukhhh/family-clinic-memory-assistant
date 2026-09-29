@@ -1,19 +1,25 @@
 """
-Doctor endpoints:
-  POST /doctor/visit    — recall history, LLM diagnosis, save as draft
-  POST /doctor/approve  — move draft → pending; retain approval to Hindsight
-  POST /doctor/reject   — move draft → rejected; retain rejection to Hindsight
+Doctor endpoints — require role 'doctor'.
+  POST /doctor/visit    — recall history, LLM diagnosis, save draft
+  POST /doctor/approve  — draft → pending; retain to Hindsight
+  POST /doctor/reject   — draft → rejected; retain to Hindsight
+
+/doctor/visit is also rate-limited (LLM call).
+Every state change is written to audit_log.
 """
 import datetime
 import logging
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.db import get_db
 from app.models import ApproveRequest, RejectRequest, VisitRequest
+from app.services.audit import append_audit
+from app.services.auth import require_role
 from app.services.llm import groq_chat, parse_llm_json
 from app.services.memory import recall_patient, retain_patient
+from app.services.rate_limit import rate_limit
 
 log = logging.getLogger("clinic.doctor")
 router = APIRouter(prefix="/doctor", tags=["doctor"])
@@ -22,7 +28,12 @@ router = APIRouter(prefix="/doctor", tags=["doctor"])
 # ── POST /doctor/visit ───────────────────────────────────────────────────────
 
 @router.post("/visit")
-async def doctor_visit(req: VisitRequest):
+@rate_limit("30/minute")
+async def doctor_visit(
+    request: Request,
+    req: VisitRequest,
+    user: dict = Depends(require_role("doctor")),
+):
     patient_id = req.patient_id.strip()
     symptoms = req.symptoms.strip()
     notes = (req.notes or "").strip()
@@ -50,15 +61,10 @@ async def doctor_visit(req: VisitRequest):
                 "allergies, drug allergies, current medications, adverse reactions",
             )
             allergy_info = allergy_text
-            if allergy_info:
-                log.info(
-                    "🔍 RECALL (allergies) │ patient=%s │ found allergy/medication context",
-                    patient_id,
-                )
         except Exception:
-            pass  # non-critical — new patient has no allergy data yet
+            pass
 
-    # ── Step 2: Build LLM prompt (patient_id is NOT sent to the LLM) ────────
+    # ── Step 2: Build LLM prompt (patient_id is never sent to LLM) ──────────
     history_block = (
         f"PATIENT HISTORY:\n{history_text}"
         if history_text
@@ -103,7 +109,7 @@ async def doctor_visit(req: VisitRequest):
             "warning": None,
         }
 
-    # ── Step 3: Save prescription as DRAFT — not visible to pharmacy yet ─────
+    # ── Step 3: Save as DRAFT — not visible to pharmacy until approved ────────
     rx_id = f"rx_{uuid.uuid4().hex[:8]}"
     medicine_name = ai_result.get("medicine_name", "Unknown")
     dosage = ai_result.get("dosage", "As directed")
@@ -114,17 +120,14 @@ async def doctor_visit(req: VisitRequest):
             " (prescription_id, patient_id, medicine_name, dosage, notes, status, created_at)"
             " VALUES (?, ?, ?, ?, ?, 'draft', ?)",
             (
-                rx_id,
-                patient_id,
-                medicine_name,
-                dosage,
+                rx_id, patient_id, medicine_name, dosage,
                 ai_result.get("instructions", ""),
                 datetime.datetime.now().isoformat(),
             ),
         )
         conn.commit()
 
-    # ── Step 4: Retain visit notes only (prescription retained after approval) ─
+    # ── Step 4: Retain visit notes to Hindsight ──────────────────────────────
     if req.use_memory:
         visit_content = (
             f"Visit on {datetime.datetime.now().strftime('%Y-%m-%d')}. "
@@ -134,6 +137,20 @@ async def doctor_visit(req: VisitRequest):
             f"Awaiting doctor approval before prescription is finalised."
         )
         await retain_patient(patient_id, visit_content, "doctor_visit")
+
+    # ── Step 5: Audit ─────────────────────────────────────────────────────────
+    append_audit(
+        actor=user["username"],
+        role=user["role"],
+        action="visit_created",
+        entity="prescription",
+        entity_id=rx_id,
+        details={
+            "patient_id": patient_id,
+            "medicine": medicine_name,
+            "has_warning": bool(ai_result.get("warning")),
+        },
+    )
 
     return {
         "prescription": {
@@ -156,7 +173,10 @@ async def doctor_visit(req: VisitRequest):
 # ── POST /doctor/approve ─────────────────────────────────────────────────────
 
 @router.post("/approve")
-async def doctor_approve(req: ApproveRequest):
+async def doctor_approve(
+    req: ApproveRequest,
+    user: dict = Depends(require_role("doctor")),
+):
     with get_db() as conn:
         rx = conn.execute(
             "SELECT * FROM prescriptions WHERE prescription_id = ?",
@@ -171,31 +191,52 @@ async def doctor_approve(req: ApproveRequest):
             )
 
         final_medicine = (req.medicine_name or "").strip() or rx["medicine_name"]
-        final_dosage = (req.dosage or "").strip() or rx["dosage"]
-        patient_id = rx["patient_id"]
+        final_dosage   = (req.dosage or "").strip() or rx["dosage"]
+        patient_id     = rx["patient_id"]
+        original_med   = rx["medicine_name"]
 
         conn.execute(
-            "UPDATE prescriptions"
-            " SET status='pending', medicine_name=?, dosage=?"
+            "UPDATE prescriptions SET status='pending', medicine_name=?, dosage=?"
             " WHERE prescription_id=?",
             (final_medicine, final_dosage, req.prescription_id),
         )
         conn.commit()
 
+    # Detect override: doctor changed what the AI suggested
+    action = (
+        "prescription_override"
+        if final_medicine != original_med or final_dosage != rx["dosage"]
+        else "prescription_approved"
+    )
+
     log.info(
-        "✅ APPROVED │ rx=%s │ patient=%s │ medicine=%s │ dosage=%s",
-        req.prescription_id, patient_id, final_medicine, final_dosage,
+        "✅ %s │ rx=%s │ patient=%s │ medicine=%s",
+        action.upper(), req.prescription_id, patient_id, final_medicine,
+    )
+
+    append_audit(
+        actor=user["username"],
+        role=user["role"],
+        action=action,
+        entity="prescription",
+        entity_id=req.prescription_id,
+        details={
+            "patient_id": patient_id,
+            "medicine": final_medicine,
+            "dosage": final_dosage,
+            "original_medicine": original_med,
+        },
     )
 
     try:
         await retain_patient(
             patient_id,
-            f"Dr approved prescription: {final_medicine} {final_dosage}. "
+            f"Dr {user['username']} approved prescription: {final_medicine} {final_dosage}. "
             f"Sent to pharmacy on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
             "doctor_approved",
         )
     except Exception:
-        pass  # non-fatal — prescription is already queued for pharmacy
+        pass
 
     return {
         "prescription_id": req.prescription_id,
@@ -210,7 +251,10 @@ async def doctor_approve(req: ApproveRequest):
 # ── POST /doctor/reject ──────────────────────────────────────────────────────
 
 @router.post("/reject")
-async def doctor_reject(req: RejectRequest):
+async def doctor_reject(
+    req: RejectRequest,
+    user: dict = Depends(require_role("doctor")),
+):
     with get_db() as conn:
         rx = conn.execute(
             "SELECT * FROM prescriptions WHERE prescription_id = ?",
@@ -224,7 +268,7 @@ async def doctor_reject(req: RejectRequest):
                 400, f"Cannot reject a prescription with status '{rx['status']}'"
             )
 
-        patient_id = rx["patient_id"]
+        patient_id    = rx["patient_id"]
         medicine_name = rx["medicine_name"]
 
         conn.execute(
@@ -238,15 +282,24 @@ async def doctor_reject(req: RejectRequest):
         req.prescription_id, patient_id, medicine_name,
     )
 
+    append_audit(
+        actor=user["username"],
+        role=user["role"],
+        action="prescription_rejected",
+        entity="prescription",
+        entity_id=req.prescription_id,
+        details={"patient_id": patient_id, "medicine": medicine_name},
+    )
+
     try:
         await retain_patient(
             patient_id,
-            f"Suggestion rejected by doctor: {medicine_name}. "
+            f"Suggestion rejected by Dr {user['username']}: {medicine_name}. "
             f"Rejected on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
             "doctor_rejected",
         )
     except Exception:
-        pass  # non-fatal
+        pass
 
     return {
         "prescription_id": req.prescription_id,

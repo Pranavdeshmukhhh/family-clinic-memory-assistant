@@ -32,16 +32,15 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
 
 # ── Inventory seed data ──────────────────────────────────────────────────────
 CORE_MEDS: list[tuple[str, int, int]] = [
-    # ── Key demo medicines with specified realistic quantities ──
-    ("Metformin 500mg",      40, 15),   # Rajesh's ongoing medication
-    ("Lisinopril 5mg",        6,  5),   # Meera's medication — near threshold
+    # (medicine_name, quantity, reorder_threshold)
+    ("Metformin 500mg",      40, 15),
+    ("Lisinopril 5mg",        6,  5),
     ("Amlodipine 5mg",       25, 10),
     ("Azithromycin 500mg",   18,  8),
-    ("Amoxicillin 500mg",     0, 10),   # intentionally out of stock
+    ("Amoxicillin 500mg",     0, 10),   # intentionally out of stock (demo)
     ("Paracetamol 500mg",    60, 20),
     ("Atorvastatin 10mg",    12,  6),
     ("Omeprazole 20mg",      30, 10),
-    # ── Fever / Pain / Anti-inflammatory ──
     ("Paracetamol 650mg",    35, 12),
     ("Ibuprofen 400mg",      48, 12),
     ("Ibuprofen 600mg",      22, 10),
@@ -56,7 +55,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Metamizole 500mg",     13,  5),
     ("Dexamethasone 4mg",    16,  5),
     ("Methylprednisolone 4mg", 9, 4),
-    # ── Cold / Cough / Allergy / Respiratory ──
     ("Cetirizine 10mg",      45, 12),
     ("Loratadine 10mg",      38, 10),
     ("Fexofenadine 120mg",   21,  7),
@@ -72,7 +70,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Pseudoephedrine 60mg", 11,  5),
     ("Budesonide 200mcg",     8,  4),
     ("Ipratropium 20mcg",     5,  3),
-    # ── Antibiotics ──
     ("Amoxicillin 250mg",    22,  8),
     ("Amoxicillin+Clavulanate 625mg", 14, 6),
     ("Ciprofloxacin 500mg",  17,  6),
@@ -86,7 +83,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Levofloxacin 500mg",   12,  5),
     ("Nitrofurantoin 100mg",  6,  3),
     ("Clarithromycin 500mg",  5,  3),
-    # ── Diabetes ──
     ("Metformin 1000mg",     28,  8),
     ("Glibenclamide 5mg",    19,  7),
     ("Glipizide 5mg",        15,  6),
@@ -96,7 +92,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Insulin NPH 100IU/ml",  5,  2),
     ("Empagliflozin 10mg",    9,  3),
     ("Dapagliflozin 10mg",    6,  3),
-    # ── Blood Pressure / Heart ──
     ("Lisinopril 10mg",      15,  5),
     ("Amlodipine 10mg",      18,  6),
     ("Atenolol 25mg",        24,  7),
@@ -108,7 +103,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Furosemide 40mg",       9,  4),
     ("Spironolactone 25mg",   7,  3),
     ("Bisoprolol 5mg",       13,  5),
-    # ── GI / Stomach ──
     ("Pantoprazole 40mg",    32, 10),
     ("Ranitidine 150mg",     20,  7),
     ("Domperidone 10mg",     27,  8),
@@ -118,7 +112,6 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("ORS Powder",           50, 15),
     ("Zinc 20mg",            30, 10),
     ("Lactulose 10g",         9,  4),
-    # ── Vitamins / Supplements ──
     ("Vitamin C 500mg",      65, 15),
     ("Vitamin D3 60000IU",   22,  7),
     ("Vitamin B12 500mcg",   29,  8),
@@ -126,19 +119,15 @@ CORE_MEDS: list[tuple[str, int, int]] = [
     ("Calcium 500mg",        28,  8),
     ("Folic Acid 5mg",       20,  7),
     ("Multivitamin Tablet",  38, 10),
-    # ── Thyroid / Hormones ──
     ("Levothyroxine 25mcg",  13,  5),
     ("Levothyroxine 50mcg",  11,  5),
     ("Levothyroxine 100mcg",  7,  3),
     ("Prednisolone 5mg",     16,  5),
     ("Hydrocortisone 20mg",   6,  3),
-    # ── Cholesterol ──
     ("Atorvastatin 20mg",    19,  7),
     ("Rosuvastatin 10mg",    16,  6),
-    # ── Mental Health / Neuro ──
     ("Alprazolam 0.25mg",     6,  3),
     ("Sertraline 50mg",       9,  4),
-    # ── Skin ──
     ("Hydrocortisone Cream 1%",  10, 4),
     ("Clotrimazole Cream 1%",     8, 3),
     ("Mupirocin Ointment 2%",     6, 3),
@@ -170,6 +159,24 @@ def init_db() -> None:
                 patient_id   TEXT PRIMARY KEY,
                 seeded_at    TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                username      TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                role          TEXT NOT NULL
+                              CHECK (role IN ('doctor', 'pharmacist', 'owner'))
+            );
+
+            CREATE TABLE IF NOT EXISTS audit_log (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp     TEXT NOT NULL,
+                actor         TEXT NOT NULL,
+                role          TEXT NOT NULL,
+                action        TEXT NOT NULL,
+                entity        TEXT,
+                entity_id     TEXT,
+                details_json  TEXT
+            );
         """)
         conn.executemany(
             "INSERT OR REPLACE INTO inventory"
@@ -180,10 +187,40 @@ def init_db() -> None:
     log.info("📦 DB initialised — %d medicines in inventory", len(CORE_MEDS))
 
 
+def seed_demo_users() -> None:
+    """
+    Seed three demo users only when DEMO_MODE=true.
+    Idempotent — skips users that already exist (INSERT OR IGNORE).
+    Passwords are hashed with bcrypt on first seed only.
+    """
+    if not settings.DEMO_MODE:
+        return
+
+    from app.services.auth import hash_password  # local import avoids circular dep at startup
+
+    demo_accounts = [
+        ("doctor_demo",     "demo1234", "doctor"),
+        ("pharmacist_demo", "demo1234", "pharmacist"),
+        ("owner_demo",      "demo1234", "owner"),
+    ]
+
+    with get_db() as conn:
+        for username, password, role in demo_accounts:
+            exists = conn.execute(
+                "SELECT 1 FROM users WHERE username = ?", (username,)
+            ).fetchone()
+            if not exists:
+                conn.execute(
+                    "INSERT INTO users (username, password_hash, role) VALUES (?,?,?)",
+                    (username, hash_password(password), role),
+                )
+                log.info("👤 Demo user seeded: %s (%s)", username, role)
+        conn.commit()
+
+
 # ── Per-retain idempotency helpers ───────────────────────────────────────────
 
 def is_seed_key_done(seed_key: str) -> bool:
-    """Return True if this seed retain has already been completed."""
     with get_db() as conn:
         row = conn.execute(
             "SELECT 1 FROM seeded_patients WHERE patient_id = ?", (seed_key,)
@@ -192,7 +229,6 @@ def is_seed_key_done(seed_key: str) -> bool:
 
 
 def mark_seed_key_done(seed_key: str) -> None:
-    """Record that this seed retain is complete so it is never repeated."""
     with get_db() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO seeded_patients (patient_id, seeded_at) VALUES (?, ?)",

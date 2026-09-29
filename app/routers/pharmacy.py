@@ -1,15 +1,19 @@
 """
-Pharmacy endpoints:
-  GET  /pharmacy/pending  — list approved prescriptions waiting for dispensing
-  POST /pharmacy/dispense — dispense or substitute from stock if out of stock
+Pharmacy endpoints.
+  GET  /pharmacy/pending  — doctor + pharmacist + owner (read)
+  POST /pharmacy/dispense — pharmacist only
+
+Every dispense (normal, substitution, or refill attempt) is audited.
 """
 import datetime
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.db import get_db
 from app.models import DispenseRequest
+from app.services.audit import append_audit
+from app.services.auth import require_role
 from app.services.inventory import check_restock, get_in_stock_medicines
 from app.services.llm import groq_chat, parse_llm_json
 from app.services.memory import recall_patient, retain_patient
@@ -19,8 +23,10 @@ router = APIRouter(prefix="/pharmacy", tags=["pharmacy"])
 
 
 @router.get("/pending")
-async def pharmacy_pending():
-    """Return only prescriptions with status 'pending' (doctor-approved)."""
+async def pharmacy_pending(
+    user: dict = Depends(require_role("doctor", "pharmacist", "owner")),
+):
+    """Return only doctor-approved prescriptions waiting for dispensing."""
     with get_db() as conn:
         rows = conn.execute(
             "SELECT * FROM prescriptions WHERE status = 'pending' ORDER BY created_at DESC"
@@ -29,8 +35,11 @@ async def pharmacy_pending():
 
 
 @router.post("/dispense")
-async def pharmacy_dispense(req: DispenseRequest):
-    # ── Phase 1: Read prescription + inventory atomically ────────────────────
+async def pharmacy_dispense(
+    req: DispenseRequest,
+    user: dict = Depends(require_role("pharmacist")),
+):
+    # ── Phase 1: Read prescription + inventory ───────────────────────────────
     with get_db() as conn:
         rx = conn.execute(
             "SELECT * FROM prescriptions WHERE prescription_id = ?",
@@ -40,23 +49,36 @@ async def pharmacy_dispense(req: DispenseRequest):
         if not rx:
             raise HTTPException(404, "Prescription not found")
 
-        if rx["status"] == "fulfilled":
-            return {"message": "Already dispensed", "prescription_id": req.prescription_id}
-
-        rx_data = dict(rx)
-        patient_id = rx_data["patient_id"]
+        rx_data       = dict(rx)
+        patient_id    = rx_data["patient_id"]
         medicine_name = rx_data["medicine_name"]
-        dosage = rx_data["dosage"]
+        dosage        = rx_data["dosage"]
+
+        if rx["status"] == "fulfilled":
+            append_audit(
+                actor=user["username"], role=user["role"],
+                action="refill_attempted",
+                entity="prescription", entity_id=req.prescription_id,
+                details={"patient_id": patient_id, "medicine": medicine_name},
+            )
+            return {
+                "message": "Already dispensed",
+                "prescription_id": req.prescription_id,
+            }
+
+        if rx["status"] != "pending":
+            raise HTTPException(
+                400, f"Cannot dispense a prescription with status '{rx['status']}'"
+            )
 
         inv = conn.execute(
             "SELECT * FROM inventory WHERE medicine_name = ?", (medicine_name,)
         ).fetchone()
         inv_data = dict(inv) if inv else None
-    # conn closed here
 
     dispensed_medicine = medicine_name
-    substitution = None
-    stock_warning = None
+    substitution       = None
+    stock_warning      = None
 
     if inv_data and inv_data["quantity"] > 0:
         # ── Phase 2a: In stock — dispense ────────────────────────────────────
@@ -72,10 +94,7 @@ async def pharmacy_dispense(req: DispenseRequest):
             )
             conn.commit()
 
-        log.info(
-            "💊 DISPENSED │ %s │ patient=%s │ remaining=%d",
-            medicine_name, patient_id, new_qty,
-        )
+        log.info("💊 DISPENSED │ %s │ patient=%s │ remaining=%d", medicine_name, patient_id, new_qty)
         check_restock(medicine_name)
 
         if new_qty <= inv_data["reorder_threshold"]:
@@ -83,14 +102,25 @@ async def pharmacy_dispense(req: DispenseRequest):
                 f"⚠️ Low stock: {medicine_name} — {new_qty} remaining "
                 f"(threshold: {inv_data['reorder_threshold']})"
             )
+
+        append_audit(
+            actor=user["username"], role=user["role"],
+            action="prescription_dispensed",
+            entity="prescription", entity_id=req.prescription_id,
+            details={
+                "patient_id": patient_id,
+                "medicine": medicine_name,
+                "remaining_stock": new_qty,
+            },
+        )
     else:
-        # ── Phase 2b: Out of stock — ask LLM for alternative ─────────────────
+        # ── Phase 2b: Out of stock — LLM substitution ─────────────────────────
         in_stock = get_in_stock_medicines()
         alt_prompt = (
-            f"The prescribed medicine '{medicine_name}' is out of stock at this pharmacy. "
-            f"The following medicines ARE currently in stock: {', '.join(in_stock)}. "
-            f"Suggest the best alternative from the in-stock list that belongs to the "
-            f"same drug class or treats the same condition. "
+            f"The prescribed medicine '{medicine_name}' is out of stock. "
+            f"In-stock medicines: {', '.join(in_stock)}. "
+            f"Suggest the best alternative from the in-stock list in the same "
+            f"drug class or for the same condition. "
             f'Respond in JSON: {{"alternative": "...", "reason": "..."}}'
         )
         alt_response = groq_chat(
@@ -103,7 +133,7 @@ async def pharmacy_dispense(req: DispenseRequest):
         except Exception:
             alt_result = {"alternative": "No suitable alternative found", "reason": alt_response}
 
-        substitution = alt_result
+        substitution     = alt_result
         alternative_name = alt_result.get("alternative", "")
 
         if alternative_name:
@@ -127,12 +157,22 @@ async def pharmacy_dispense(req: DispenseRequest):
                     conn.commit()
                 dispensed_medicine = alternative_name
                 log.info(
-                    "💊 DISPENSED (substitute) │ %s → %s │ patient=%s │ remaining=%d",
-                    medicine_name, alternative_name, patient_id, new_qty,
+                    "💊 DISPENSED (sub) │ %s → %s │ patient=%s",
+                    medicine_name, alternative_name, patient_id,
                 )
                 check_restock(alternative_name)
-            else:
-                log.warning("⚠️  Alternative '%s' also not available", alternative_name)
+
+        append_audit(
+            actor=user["username"], role=user["role"],
+            action="substitution_dispensed",
+            entity="prescription", entity_id=req.prescription_id,
+            details={
+                "patient_id": patient_id,
+                "original_medicine": medicine_name,
+                "dispensed_medicine": dispensed_medicine,
+                "reason": alt_result.get("reason", ""),
+            },
+        )
 
     # ── Phase 3: Recall patient context for pharmacist ───────────────────────
     patient_context = ""
@@ -142,7 +182,7 @@ async def pharmacy_dispense(req: DispenseRequest):
     except Exception:
         pass
 
-    # ── Phase 4: Retain dispensing event to Hindsight ────────────────────────
+    # ── Phase 4: Retain dispensing event ────────────────────────────────────
     retain_text = (
         f"Pharmacy dispensed on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}. "
         f"Original prescription: {medicine_name} {dosage}. "
@@ -153,7 +193,6 @@ async def pharmacy_dispense(req: DispenseRequest):
         if substitution
         else "Dispensed as prescribed."
     )
-
     try:
         await retain_patient(patient_id, retain_text, "pharmacy_dispense")
     except Exception as exc:

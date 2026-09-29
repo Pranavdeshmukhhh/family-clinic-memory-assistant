@@ -1,4 +1,4 @@
-"""Tests for GET /health."""
+"""Tests for GET /health — public endpoint, no auth required."""
 
 
 def test_health_returns_200(client):
@@ -17,17 +17,20 @@ def test_health_schema(client):
 
 
 def test_health_demo_mode_integrations(client):
-    """In DEMO_MODE with no keys set, all integrations must report False."""
+    """In DEMO_MODE with no keys, all integrations must report False."""
     data = client.get("/health").json()
     assert data["demo_mode"] is True
     assert data["integrations"]["hindsight"] is False
     assert data["integrations"]["telegram"] is False
-    # Groq may also be False (no key in test env)
 
 
 def test_health_no_secrets_in_response(client):
-    """Response must never contain key-like strings."""
-    import json
     raw = client.get("/health").text
     for bad in ("api_key", "token", "secret", "password"):
         assert bad not in raw.lower(), f"Sensitive field '{bad}' found in /health response"
+
+
+def test_health_requires_no_auth(client):
+    """Health must work without any Authorization header."""
+    resp = client.get("/health")
+    assert resp.status_code == 200
