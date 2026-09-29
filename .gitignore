@@ -1,0 +1,39 @@
+# Environment variables & secrets (CRITICAL: NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.secret
+
+# SQLite & Runtime Storage
+clinic.db
+*.db
+*.sqlite
+*.sqlite3
+stores/
+
+# Python Caches & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution & Build
+dist/
+build/
+*.egg-info/
+
+# Logs & Temporary files
+*.log
+scratch/
+
+# IDE & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
