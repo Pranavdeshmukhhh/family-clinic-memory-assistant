@@ -31,9 +31,11 @@ build/
 # Logs & Temporary files
 *.log
 scratch/
+smoke_test.py
 
 # IDE & System files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+.pytest_cache/
