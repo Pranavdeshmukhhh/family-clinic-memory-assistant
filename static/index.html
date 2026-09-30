@@ -26,6 +26,9 @@
       --green:    #16a34a;
       --green-lt: #f0fdf4;
       --green-bd: #bbf7d0;
+      --blue:     #2563eb;
+      --blue-lt:  #eff6ff;
+      --blue-bd:  #bfdbfe;
       --radius:   12px;
       --shadow:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
@@ -36,6 +39,7 @@
       color: var(--text);
       min-height: 100vh;
       line-height: 1.5;
+      font-size: 14px;
     }
 
     /* ── Top bar ── */
@@ -89,6 +93,11 @@
     .badge-dot {
       width: 6px; height: 6px; border-radius: 50%; background: var(--teal);
     }
+    .demo-tag {
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      background: var(--amber-lt); color: var(--amber);
+      border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
 
     /* ── Layout ── */
     .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
@@ -97,10 +106,10 @@
 
     .two-col {
       display: grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 400px 1fr;
       gap: 24px;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 860px) {
       .two-col { grid-template-columns: 1fr; }
     }
 
@@ -134,7 +143,7 @@
       letter-spacing: 0.5px;
       margin-bottom: 6px;
     }
-    select, input, textarea {
+    select, input[type="text"], textarea {
       width: 100%;
       padding: 10px 12px;
       border: 1.5px solid var(--border);
@@ -145,7 +154,7 @@
       background: var(--card-bg);
       transition: border-color 0.15s;
     }
-    select:focus, input:focus, textarea:focus {
+    select:focus, input[type="text"]:focus, textarea:focus {
       outline: none;
       border-color: var(--teal);
     }
@@ -171,7 +180,7 @@
       width: 40px;
       height: 22px;
     }
-    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle-slider {
       position: absolute;
       cursor: pointer;
@@ -205,10 +214,11 @@
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
-      transition: opacity 0.15s;
+      transition: opacity 0.15s, transform 0.1s;
       white-space: nowrap;
     }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
+    .btn:hover:not(:disabled) { opacity: 0.88; }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-teal { background: var(--teal); color: #fff; }
     .btn-outline {
@@ -218,7 +228,9 @@
     }
     .btn-green { background: var(--green); color: #fff; }
     .btn-red { background: var(--red); color: #fff; }
+    .btn-amber { background: var(--amber); color: #fff; }
     .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-lg { padding: 12px 28px; font-size: 15px; }
     .btn-full { width: 100%; }
 
     /* ── Spinner ── */
@@ -232,6 +244,20 @@
     }
     .spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Progress dots */
+    .progress-dots { display: inline-block; }
+    .progress-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
 
     /* ── Alert banners ── */
     .alert {
@@ -251,8 +277,8 @@
     .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
     .hide { display: none !important; }
 
-    /* ── Memory chips ── */
-    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    /* ── Chips ── */
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .chip {
       font-size: 12px;
       padding: 4px 10px;
@@ -264,6 +290,10 @@
       max-width: 100%;
     }
     .chip-new { background: var(--amber-lt); color: var(--amber); }
+    .chip-red { background: var(--red-lt); color: var(--red); font-weight: 600; }
+    .chip-blue { background: var(--blue-lt); color: var(--blue); }
+    .chip-green { background: var(--green-lt); color: var(--green); }
+    .chip-muted { background: #f1f5f9; color: var(--muted); }
 
     /* ── Result sections ── */
     .result-section { margin-bottom: 16px; }
@@ -314,11 +344,12 @@
     }
     @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
     .compare-col {
-      background: var(--bg);
       border-radius: 8px;
-      padding: 14px;
-      border: 1px solid var(--border);
+      padding: 16px;
+      border: 1.5px solid var(--border);
     }
+    .compare-col-on { background: var(--teal-lt); border-color: var(--teal-mid); }
+    .compare-col-off { background: #f8fafc; }
     .compare-label {
       font-size: 12px;
       font-weight: 700;
@@ -329,7 +360,7 @@
       border-bottom: 1px solid var(--border);
     }
     .compare-label-on { color: var(--teal); }
-    .compare-label-off { color: var(--amber); }
+    .compare-label-off { color: var(--muted); }
 
     /* ── Tables ── */
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -349,7 +380,6 @@
       vertical-align: middle;
     }
     tr:last-child td { border-bottom: none; }
-    tr.low-stock td { background: var(--amber-lt); }
 
     /* ── Empty state ── */
     .empty-state {
@@ -359,18 +389,6 @@
       font-size: 14px;
     }
     .empty-state-icon { font-size: 32px; margin-bottom: 8px; }
-
-    /* ── Footer ── */
-    .footer {
-      background: var(--red-lt);
-      color: var(--red);
-      text-align: center;
-      padding: 10px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      border-top: 1px solid var(--red-bd);
-      margin-top: 40px;
-    }
 
     /* ── Risk profile ── */
     .risk-text {
@@ -406,6 +424,130 @@
     .finding-major { background: #fff7ed; border-left: 3px solid #ea580c; color: #ea580c; }
     .finding-moderate { background: var(--amber-lt); border-left: 3px solid var(--amber); color: var(--amber); }
     .finding-warning { background: #f8fafc; border-left: 3px solid #94a3b8; color: var(--muted); }
+
+    /* ── Story banner ── */
+    .story-banner {
+      background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+      border: 1px solid var(--teal-mid);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+    .story-text {
+      font-size: 14px; font-weight: 500; color: var(--text);
+      font-style: italic; line-height: 1.5;
+    }
+    .story-expand {
+      font-size: 12px; color: var(--teal); font-weight: 600;
+      cursor: pointer; margin-top: 6px; display: inline-block;
+      border: none; background: none; font-family: inherit;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .story-detail {
+      font-size: 13px; color: var(--muted); margin-top: 10px;
+      padding-top: 10px; border-top: 1px solid var(--border);
+      line-height: 1.6; display: none;
+    }
+    .story-actions {
+      display: flex; gap: 8px; align-items: center; margin-top: 12px;
+    }
+
+    /* ── Patient snapshot ── */
+    .patient-snapshot {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .snapshot-name { font-size: 16px; font-weight: 700; color: var(--text); }
+    .snapshot-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .snapshot-chips { margin-top: 10px; }
+
+    /* ── Memory trace ── */
+    .memory-trace {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      font-size: 12px; color: var(--muted); padding: 8px 12px;
+      background: #f8fafc; border-radius: 6px; margin-top: 10px;
+    }
+    .trace-step { display: inline-flex; align-items: center; gap: 3px; }
+    .trace-ok { color: var(--green); }
+    .trace-arrow { color: #cbd5e1; font-weight: 700; }
+    .trace-saved { color: var(--teal); font-weight: 600; font-size: 11px; }
+
+    /* ── Pharmacy cards ── */
+    .rx-card-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px; padding: 16px;
+    }
+    .rx-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .rx-card-patient { font-size: 14px; font-weight: 700; }
+    .rx-card-drug { font-size: 15px; font-weight: 600; color: var(--teal); }
+    .rx-card-dose { font-size: 13px; color: var(--muted); }
+    .rx-card-time { font-size: 11px; color: var(--muted); }
+    .rx-card-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .status-pill {
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px; text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .pill-pending { background: var(--amber-lt); color: var(--amber); }
+    .pill-dispensed { background: var(--green-lt); color: var(--green); }
+
+    /* ── Inventory filters ── */
+    .inv-filters {
+      display: flex; gap: 10px; align-items: center; padding: 14px 16px;
+      border-bottom: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .inv-search {
+      flex: 1; min-width: 150px; padding: 7px 12px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text);
+      background: var(--bg);
+    }
+    .inv-search:focus { outline: none; border-color: var(--teal); background: #fff; }
+    .filter-toggle {
+      display: flex; align-items: center; gap: 6px; font-size: 12px;
+      font-weight: 600; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .filter-toggle input { accent-color: var(--amber); width: 14px; height: 14px; cursor: pointer; }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(120px); opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-green { background: var(--green); color: #fff; }
+    .toast-amber { background: var(--amber); color: #fff; }
+    .toast-red { background: var(--red); color: #fff; }
+
+    /* ── Demo caption ── */
+    .demo-caption {
+      font-size: 13px; font-weight: 600; padding: 10px 14px;
+      border-radius: 8px; margin-bottom: 12px; text-align: center;
+    }
+    .caption-step1 { background: #f8fafc; color: var(--muted); border: 1px dashed #cbd5e1; }
+    .caption-step2 { background: var(--teal-lt); color: var(--teal); border: 1px dashed var(--teal-mid); }
+
+    /* ── Footer ── */
+    .site-footer {
+      text-align: center; padding: 16px 24px; color: var(--muted);
+      font-size: 12px; border-top: 1px solid var(--border);
+      margin-top: 40px; background: var(--card-bg);
+      line-height: 1.5;
+    }
+
+    /* Diff highlight */
+    .diff-highlight { background: #fef3c7; padding: 1px 4px; border-radius: 3px; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -420,26 +562,65 @@
     <button class="tab-btn" onclick="switchTab('pharmacy')" id="tab-pharmacy">💊 Pharmacy</button>
   </div>
   <div class="topbar-spacer"></div>
+  <span class="demo-tag" id="demo-tag">Demo</span>
   <div class="topbar-badge"><div class="badge-dot"></div> Memory: Hindsight</div>
 </div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗ -->
+<!-- ║  TOAST                                                       ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════╝ -->
+<div class="toast" id="toast"></div>
 
 <!-- ╔══════════════════════════════════════════════════════════════╗ -->
 <!-- ║  DOCTOR PAGE                                                 ║ -->
 <!-- ╚══════════════════════════════════════════════════════════════╝ -->
 <div class="container page active" id="page-doctor">
+
+  <!-- PART 1: Story banner -->
+  <div class="story-banner" id="story-banner">
+    <div class="story-text">
+      "7 PM, 40 patients waiting. Will the doctor remember this patient's penicillin allergy? <strong>Hindsight does.</strong>"
+    </div>
+    <button class="story-expand" onclick="toggleStoryDetail()">Why memory matters ▾</button>
+    <div class="story-detail" id="story-detail">
+      Without persistent memory, every visit starts from scratch — the AI has no context about allergies,
+      past prescriptions, or chronic conditions. With Hindsight, each visit builds on the last: allergy
+      warnings fire automatically, drug interactions are caught, and the doctor gets a personalized
+      recommendation in seconds. <strong>More visits = smarter answers.</strong>
+    </div>
+    <div class="story-actions">
+      <button class="btn btn-teal btn-sm" id="btn-demo-story" onclick="runDemoStory()">▶ Run demo story</button>
+      <span id="demo-progress" class="hide" style="font-size:12px;color:var(--muted);">
+        <span class="spinner" style="width:14px;height:14px;"></span>
+        <span id="demo-progress-text">Preparing demo</span><span class="progress-dots"></span>
+      </span>
+    </div>
+  </div>
+
   <div class="two-col">
-    <!-- LEFT COLUMN: New Visit Form -->
+    <!-- LEFT COLUMN: Patient + Form -->
     <div>
+      <!-- Patient snapshot -->
+      <div class="patient-snapshot hide" id="patient-snapshot">
+        <div class="snapshot-name" id="snap-name"></div>
+        <div class="snapshot-meta" id="snap-meta"></div>
+        <div class="snapshot-chips chip-list" id="snap-chips" style="margin-top:10px;margin-bottom:0;"></div>
+      </div>
+
       <div class="card">
-        <div class="card-header">📋 New Visit</div>
+        <div class="card-header">
+          📋 New Visit
+          <span style="margin-left:auto;"></span>
+          <span class="chip chip-muted hide" id="visit-count-chip" style="font-size:11px;"></span>
+        </div>
         <div class="card-body">
           <div class="form-group">
-            <label for="pid">Patient ID</label>
-            <select id="pid">
+            <label for="pid">Patient</label>
+            <select id="pid" onchange="onPatientChange()">
               <option value="">— Select a patient —</option>
-              <option value="patient_001">patient_001 — Ravi Kumar (HTN, DM, penicillin allergy)</option>
-              <option value="patient_002">patient_002 — Lakshmi Devi (DM, hypothyroidism)</option>
-              <option value="patient_003">patient_003 — Arjun Reddy (migraine, NSAID sensitivity)</option>
+              <option value="patient_001">patient_001 — Rajesh Kumar (54, T2DM, penicillin allergy)</option>
+              <option value="patient_002">patient_002 — Meera Iyer (29, Stage 1 HTN)</option>
+              <option value="patient_003">patient_003 — New Patient (no history)</option>
             </select>
           </div>
           <div class="form-group">
@@ -451,11 +632,11 @@
               <input type="checkbox" id="use_mem" checked>
               <span class="toggle-slider"></span>
             </label>
-            <span class="toggle-label">Use memory</span>
+            <span class="toggle-label">Use Hindsight memory</span>
           </div>
           <div id="form-err" class="alert alert-red hide"><span class="alert-icon">⚠️</span><span id="form-err-text"></span></div>
           <button class="btn btn-teal btn-full" id="btn-consult" onclick="doVisit()">
-            Consult
+            🩺 Consult
           </button>
           <div style="margin-top:10px;">
             <button class="btn btn-outline btn-full" id="btn-compare" onclick="doCompare()">
@@ -486,7 +667,8 @@
       <div class="card" id="result-empty">
         <div class="empty-state">
           <div class="empty-state-icon">🩺</div>
-          Submit a consultation to see AI-assisted diagnosis and prescription.
+          <div style="font-weight:600;margin-bottom:4px;">No consultation yet</div>
+          Select a patient, describe symptoms, and click <strong>Consult</strong> — or try <strong>Run demo story</strong> above.
         </div>
       </div>
 
@@ -495,14 +677,20 @@
         <div class="card-loading"><div class="spinner"></div> Consulting AI with patient history…</div>
       </div>
 
+      <!-- Demo caption -->
+      <div id="demo-caption" class="hide"></div>
+
       <!-- Main result -->
       <div class="card hide" id="result-card">
         <div class="card-header">📋 Consultation Result</div>
         <div class="card-body">
-          <!-- Warning banner -->
-          <div id="warning-banner" class="alert alert-red hide">
-            <span class="alert-icon">🚨</span>
-            <span id="warning-text"></span>
+          <!-- Allergy warning banner -->
+          <div id="warning-banner" class="hide" style="background:var(--red-lt);border:1.5px solid var(--red-bd);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;">
+            <span style="font-size:24px;flex-shrink:0;">🚨</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:2px;" id="warning-title">Allergy Conflict</div>
+              <div style="font-size:13px;color:var(--red);line-height:1.4;" id="warning-text"></div>
+            </div>
           </div>
 
           <!-- Safety findings -->
@@ -515,10 +703,23 @@
           <div class="result-section">
             <div class="result-label">🧠 Recalled from Memory</div>
             <div class="chip-list" id="memory-chips"></div>
+            <div id="memory-empty-note" class="hide" style="font-size:13px;color:var(--muted);font-style:italic;">
+              No history yet — this is a new patient, so the answer is generic.
+            </div>
+          </div>
+
+          <!-- Memory trace -->
+          <div class="memory-trace" id="memory-trace">
+            <span class="trace-step" id="trace-recall">recall()</span>
+            <span class="trace-arrow">→</span>
+            <span class="trace-step" id="trace-reason">reason</span>
+            <span class="trace-arrow">→</span>
+            <span class="trace-step" id="trace-retain">retain()</span>
+            <span class="trace-saved" id="trace-saved" style="margin-left:8px;">💾 Saved to patient memory</span>
           </div>
 
           <!-- Diagnosis -->
-          <div class="result-section">
+          <div class="result-section" style="margin-top:16px;">
             <div class="result-label">Suggested Diagnosis</div>
             <div class="result-value-lg" id="r-diag"></div>
           </div>
@@ -541,14 +742,17 @@
 
           <!-- Draft edit & approve/reject -->
           <div id="draft-section" class="hide" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
-            <div class="result-label" style="margin-bottom:8px;">Doctor Review — Edit if needed</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <div class="result-label" style="margin-bottom:0;">Edit Before Sending</div>
+              <span style="font-size:11px;color:var(--amber);font-weight:600;">Doctor review required</span>
+            </div>
             <div class="draft-edit-row">
               <input type="text" id="draft-med" placeholder="Medicine">
               <input type="text" id="draft-dose" placeholder="Dosage">
             </div>
             <div id="draft-err" class="alert alert-red hide"><span class="alert-icon">⚠️</span><span id="draft-err-text"></span></div>
             <div class="draft-actions">
-              <button class="btn btn-green" id="btn-approve" onclick="doApprove()">✅ Approve & Send to Pharmacy</button>
+              <button class="btn btn-green" id="btn-approve" onclick="doApprove()">✅ Send to Pharmacy</button>
               <button class="btn btn-outline" id="btn-reject" onclick="doReject()">Reject</button>
             </div>
           </div>
@@ -569,13 +773,13 @@
         <div class="card-body">
           <div id="compare-loading" class="card-loading hide"><div class="spinner"></div> Running both consultations…</div>
           <div class="compare-grid" id="compare-grid" style="display:none;">
-            <div class="compare-col">
-              <div class="compare-label compare-label-on">🧠 With Memory</div>
-              <div id="cmp-with"></div>
-            </div>
-            <div class="compare-col">
+            <div class="compare-col compare-col-off">
               <div class="compare-label compare-label-off">🚫 Without Memory</div>
               <div id="cmp-without"></div>
+            </div>
+            <div class="compare-col compare-col-on">
+              <div class="compare-label compare-label-on">🧠 With Hindsight Memory</div>
+              <div id="cmp-with"></div>
             </div>
           </div>
         </div>
@@ -594,19 +798,13 @@
       📦 Pending Prescriptions
       <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:auto;">Auto-refreshes every 5s</span>
     </div>
-    <div class="card-body" style="padding:0;">
-      <div id="pending-loading" class="card-loading"><div class="spinner"></div> Loading prescriptions…</div>
-      <div id="pending-empty" class="empty-state hide">
-        <div class="empty-state-icon">📭</div>
-        No pending prescriptions. Waiting for doctor approvals…
-      </div>
-      <table id="pending-table" class="hide">
-        <thead>
-          <tr><th>Patient</th><th>Medicine</th><th>Dosage</th><th>Status</th><th></th></tr>
-        </thead>
-        <tbody id="pending-body"></tbody>
-      </table>
+    <div id="pending-loading" class="card-loading"><div class="spinner"></div> Loading prescriptions…</div>
+    <div id="pending-empty" class="empty-state hide">
+      <div class="empty-state-icon">📭</div>
+      <div style="font-weight:600;margin-bottom:4px;">No pending prescriptions</div>
+      Waiting for doctor approvals. Approved prescriptions will appear here automatically.
     </div>
+    <div id="pending-cards" class="rx-card-grid hide"></div>
   </div>
 
   <!-- Dispense feedback -->
@@ -615,6 +813,13 @@
   <!-- Inventory -->
   <div class="card" style="margin-top:20px;">
     <div class="card-header">📦 Inventory</div>
+    <div class="inv-filters">
+      <input type="text" class="inv-search" id="inv-search" placeholder="Search medicines…" oninput="filterInventory()">
+      <label class="filter-toggle">
+        <input type="checkbox" id="inv-low-only" onchange="filterInventory()">
+        Low stock only
+      </label>
+    </div>
     <div class="card-body" style="padding:0;">
       <div id="inv-loading" class="card-loading"><div class="spinner"></div> Loading inventory…</div>
       <table id="inv-table" class="hide">
@@ -630,9 +835,10 @@
 <!-- ╔══════════════════════════════════════════════════════════════╗ -->
 <!-- ║  FOOTER                                                      ║ -->
 <!-- ╚══════════════════════════════════════════════════════════════╝ -->
-<div class="footer">
-  ⚠️ Decision support only. A licensed doctor must review every prescription before it reaches a patient.
-</div>
+<footer class="site-footer">
+  ⚕️ <strong>Decision support only.</strong> A licensed doctor must review every prescription before it reaches a patient.<br>
+  All patient data in this demo is fully synthetic.
+</footer>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
 <!--  JAVASCRIPT                                                    -->
@@ -642,6 +848,35 @@ const API = '';
 let doctorToken = null;
 let pharmacistToken = null;
 let _currentRxId = null;
+let _inventoryData = [];  // cache for filtering
+
+/* ── Patient knowledge (for snapshot card) ── */
+const PATIENTS = {
+  patient_001: {
+    name: 'Rajesh Kumar', age: 54,
+    allergies: ['Penicillin'],
+    conditions: ['Type 2 Diabetes'],
+    meds: ['Metformin 500mg'],
+    visits: 2,
+    lastVisit: 'Follow-up: fasting glucose 142 mg/dL, throat discomfort'
+  },
+  patient_002: {
+    name: 'Meera Iyer', age: 29,
+    allergies: [],
+    conditions: ['Stage 1 Hypertension'],
+    meds: ['Lisinopril 5mg'],
+    visits: 1,
+    lastVisit: 'BP 148/94, started Lisinopril'
+  },
+  patient_003: {
+    name: 'New Patient', age: null,
+    allergies: [],
+    conditions: [],
+    meds: [],
+    visits: 0,
+    lastVisit: null
+  }
+};
 
 /* ── Auth: auto-login demo users ── */
 async function autoLogin() {
@@ -684,15 +919,137 @@ function switchTab(tab) {
 function show(id) { document.getElementById(id).classList.remove('hide'); }
 function hide(id) { document.getElementById(id).classList.add('hide'); }
 function setText(id, t) { document.getElementById(id).textContent = t; }
-
 function showFormErr(msg) { setText('form-err-text', msg); show('form-err'); }
 function hideFormErr() { hide('form-err'); }
+
+function showToast(msg, type='green', duration=4000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${type} show`;
+  setTimeout(() => { el.classList.remove('show'); }, duration);
+}
 
 function lockConsult(on) {
   const btn = document.getElementById('btn-consult');
   btn.disabled = on;
-  btn.innerHTML = on ? '<span class="spinner spinner-white"></span> Consulting…' : 'Consult';
+  btn.innerHTML = on ? '<span class="spinner spinner-white"></span> Consulting…' : '🩺 Consult';
   document.getElementById('btn-compare').disabled = on;
+  document.getElementById('btn-demo-story').disabled = on;
+}
+
+/* ── Story banner expand ── */
+function toggleStoryDetail() {
+  const el = document.getElementById('story-detail');
+  const btn = el.previousElementSibling;
+  if (el.style.display === 'none' || !el.style.display) {
+    el.style.display = 'block';
+    btn.textContent = 'Why memory matters ▴';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Why memory matters ▾';
+  }
+}
+
+/* ── Patient change → snapshot ── */
+function onPatientChange() {
+  const pid = document.getElementById('pid').value;
+  const snap = document.getElementById('patient-snapshot');
+  const visitChip = document.getElementById('visit-count-chip');
+
+  if (!pid || !PATIENTS[pid]) {
+    snap.classList.add('hide');
+    visitChip.classList.add('hide');
+    return;
+  }
+
+  const p = PATIENTS[pid];
+  document.getElementById('snap-name').textContent = p.name;
+  document.getElementById('snap-meta').textContent = p.age
+    ? `Age ${p.age} · ${p.visits} past visit${p.visits !== 1 ? 's' : ''}`
+    : 'New patient — no history';
+
+  let chips = '';
+  p.allergies.forEach(a => { chips += `<span class="chip chip-red">⚠️ ${a} allergy</span>`; });
+  p.conditions.forEach(c => { chips += `<span class="chip chip-blue">${c}</span>`; });
+  p.meds.forEach(m => { chips += `<span class="chip">${m}</span>`; });
+  if (p.lastVisit) {
+    chips += `<span class="chip chip-muted" style="font-style:italic;">Last: ${p.lastVisit}</span>`;
+  }
+  document.getElementById('snap-chips').innerHTML = chips;
+  snap.classList.remove('hide');
+
+  // Visit count chip
+  if (p.visits > 0) {
+    visitChip.textContent = `${p.visits} past visit${p.visits !== 1 ? 's' : ''}`;
+    visitChip.classList.remove('hide');
+  } else {
+    visitChip.textContent = 'New patient';
+    visitChip.classList.remove('hide');
+  }
+}
+
+/* ── PART 1: Demo story runner ── */
+async function runDemoStory() {
+  hideFormErr();
+  const pid = 'patient_001';
+  const sym = 'cough and sore throat';
+
+  // Set form values
+  document.getElementById('pid').value = pid;
+  onPatientChange();
+  document.getElementById('sym').value = sym;
+
+  // Prepare UI
+  hide('result-empty'); hide('result-card'); hide('compare-card');
+  show('demo-progress');
+  lockConsult(true);
+
+  try {
+    // Step 1: Without memory
+    setText('demo-progress-text', 'Step 1: Consulting without memory');
+    const r1 = await fetch(`${API}/doctor/visit`, {
+      method:'POST', headers: docHeaders(),
+      body: JSON.stringify({ patient_id: pid, symptoms: sym, use_memory: false }),
+    });
+    const d1 = r1.ok ? await r1.json() : null;
+
+    // Show Step 1 result in compare
+    show('compare-card');
+    document.getElementById('compare-grid').style.display = 'grid';
+    if (d1) {
+      document.getElementById('cmp-without').innerHTML =
+        '<div class="demo-caption caption-step1" style="margin-bottom:10px;">Step 1: Without memory, the AI only sees today\'s symptoms</div>' +
+        formatCmp(d1, false);
+    }
+    document.getElementById('cmp-with').innerHTML =
+      '<div class="card-loading" style="padding:20px;"><div class="spinner"></div> Waiting…</div>';
+
+    // Pause 3 seconds
+    setText('demo-progress-text', 'Pausing before Step 2');
+    await new Promise(r => setTimeout(r, 3000));
+
+    // Step 2: With memory
+    setText('demo-progress-text', 'Step 2: Consulting with Hindsight memory');
+    const r2 = await fetch(`${API}/doctor/visit`, {
+      method:'POST', headers: docHeaders(),
+      body: JSON.stringify({ patient_id: pid, symptoms: sym, use_memory: true }),
+    });
+    const d2 = r2.ok ? await r2.json() : null;
+
+    if (d2) {
+      document.getElementById('cmp-with').innerHTML =
+        '<div class="demo-caption caption-step2" style="margin-bottom:10px;">Step 2: With Hindsight memory, it recalls history</div>' +
+        formatCmp(d2, true);
+      // Also fill the main result
+      fillResult(d2);
+    }
+
+  } catch(e) {
+    showFormErr(`Demo error: ${e.message}`);
+  } finally {
+    hide('demo-progress');
+    lockConsult(false);
+  }
 }
 
 /* ── Doctor: Visit ── */
@@ -706,6 +1063,7 @@ async function doVisit() {
   hide('result-empty'); hide('result-card'); hide('compare-card');
   hide('warning-banner'); hide('safety-findings');
   hide('status-sent'); hide('status-rejected'); hide('draft-section');
+  hide('demo-caption');
   show('result-loading');
   lockConsult(true);
 
@@ -716,14 +1074,14 @@ async function doVisit() {
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      showFormErr(d.detail || `Server error ${res.status}`);
+      showFormErr(d.detail || `Server error ${res.status}. Please try again.`);
       show('result-empty');
       return;
     }
     const d = await res.json();
     fillResult(d);
   } catch(e) {
-    showFormErr(`Connection error: ${e.message}`);
+    showFormErr(`Connection error: ${e.message}. Is the server running?`);
     show('result-empty');
   } finally {
     hide('result-loading');
@@ -732,9 +1090,13 @@ async function doVisit() {
 }
 
 function fillResult(d) {
-  // Warning banner
+  // Warning banner — prominent allergy warning
   if (d.warning) {
-    setText('warning-text', d.warning);
+    const w = d.warning;
+    // Make it plain language
+    const isAllergy = w.toLowerCase().includes('allerg');
+    document.getElementById('warning-title').textContent = isAllergy ? '⛔ Allergy Conflict' : '⚠️ Warning';
+    document.getElementById('warning-text').textContent = w;
     show('warning-banner');
   } else {
     hide('warning-banner');
@@ -757,21 +1119,41 @@ function fillResult(d) {
 
   // Memory chips
   const chips = document.getElementById('memory-chips');
+  const emptyNote = document.getElementById('memory-empty-note');
+  emptyNote.classList.add('hide');
+
   if (d.is_new_patient) {
-    chips.innerHTML = '<span class="chip chip-new">No prior history — first visit</span>';
+    chips.innerHTML = '';
+    emptyNote.classList.remove('hide');
   } else if (d.memory_used && d.memory_used !== 'Memory disabled (use_memory=false)') {
     const facts = d.memory_used.split('\n').filter(f => f.trim());
     if (facts.length > 0) {
       chips.innerHTML = facts.map(f => {
+        // Categorize chips
+        const fl = f.toLowerCase();
+        let cls = 'chip';
+        if (fl.includes('allerg')) cls = 'chip chip-red';
+        else if (fl.includes('diagnos') || fl.includes('diabetes') || fl.includes('hypertension')) cls = 'chip chip-blue';
+        else if (fl.includes('prescrib') || fl.includes('metformin') || fl.includes('lisinopril')) cls = 'chip chip-green';
         const short = f.length > 120 ? f.slice(0, 117) + '…' : f;
-        return `<span class="chip" title="${f.replace(/"/g,'&quot;')}">${short}</span>`;
+        return `<span class="${cls}" title="${f.replace(/"/g,'&quot;')}">${short}</span>`;
       }).join('');
     } else {
-      chips.innerHTML = '<span class="chip">No relevant memories recalled</span>';
+      chips.innerHTML = '<span class="chip chip-muted">No relevant memories recalled</span>';
     }
   } else {
     chips.innerHTML = '<span class="chip chip-new">Memory not used for this consultation</span>';
   }
+
+  // Memory trace
+  const recallOk = d.use_memory !== false;
+  const retainOk = d.use_memory !== false;
+  document.getElementById('trace-recall').innerHTML = recallOk
+    ? '<span class="trace-ok">✓</span> recall()' : 'recall()';
+  document.getElementById('trace-reason').innerHTML = '<span class="trace-ok">✓</span> reason';
+  document.getElementById('trace-retain').innerHTML = retainOk
+    ? '<span class="trace-ok">✓</span> retain()' : 'retain()';
+  document.getElementById('trace-saved').style.display = retainOk ? 'inline' : 'none';
 
   // Diagnosis, prescription, reasoning
   setText('r-diag', d.ai_diagnosis || '—');
@@ -785,6 +1167,7 @@ function fillResult(d) {
   document.getElementById('draft-dose').value = d.prescription?.dosage || '';
   _currentRxId = d.prescription?.prescription_id;
   show('draft-section');
+  hide('status-sent'); hide('status-rejected');
 
   show('result-card');
 }
@@ -811,17 +1194,18 @@ async function doApprove() {
       const d = await res.json().catch(() => ({}));
       setText('draft-err-text', d.detail || `Error ${res.status}`);
       show('draft-err');
-      btn.disabled = false; btn.textContent = '✅ Approve & Send to Pharmacy';
+      btn.disabled = false; btn.textContent = '✅ Send to Pharmacy';
       document.getElementById('btn-reject').disabled = false;
       return;
     }
     _currentRxId = null;
     hide('draft-section');
     show('status-sent');
+    showToast('✅ Prescription sent to pharmacy', 'green');
   } catch(e) {
     setText('draft-err-text', e.message);
     show('draft-err');
-    btn.disabled = false; btn.textContent = '✅ Approve & Send to Pharmacy';
+    btn.disabled = false; btn.textContent = '✅ Send to Pharmacy';
     document.getElementById('btn-reject').disabled = false;
   }
 }
@@ -840,6 +1224,7 @@ async function doReject() {
     _currentRxId = null;
     hide('draft-section');
     show('status-rejected');
+    showToast('Prescription rejected', 'amber');
   } catch(e) {
     document.getElementById('btn-approve').disabled = false;
     document.getElementById('btn-reject').disabled = false;
@@ -861,14 +1246,24 @@ async function doCompare() {
   lockConsult(true);
 
   try {
-    const [rA, rB] = await Promise.all([
-      fetch(`${API}/doctor/visit`, { method:'POST', headers:docHeaders(), body:JSON.stringify({patient_id:pid, symptoms:sym, use_memory:true}) }),
-      fetch(`${API}/doctor/visit`, { method:'POST', headers:docHeaders(), body:JSON.stringify({patient_id:pid, symptoms:sym, use_memory:false}) }),
-    ]);
-    if (!rA.ok || !rB.ok) { showFormErr('Server error during comparison'); hide('compare-card'); return; }
-    const [dA, dB] = await Promise.all([rA.json(), rB.json()]);
-    document.getElementById('cmp-with').innerHTML = formatCmp(dA, true);
-    document.getElementById('cmp-without').innerHTML = formatCmp(dB, false);
+    // Sequential: without first, then with — so the demo reads naturally
+    const rOff = await fetch(`${API}/doctor/visit`, {
+      method:'POST', headers:docHeaders(),
+      body:JSON.stringify({patient_id:pid, symptoms:sym, use_memory:false})
+    });
+    const rOn = await fetch(`${API}/doctor/visit`, {
+      method:'POST', headers:docHeaders(),
+      body:JSON.stringify({patient_id:pid, symptoms:sym, use_memory:true})
+    });
+    if (!rOff.ok || !rOn.ok) { showFormErr('Server error during comparison'); hide('compare-card'); return; }
+    const [dOff, dOn] = await Promise.all([rOff.json(), rOn.json()]);
+
+    // Detect diff
+    const medDiff = dOff.prescription?.medicine_name !== dOn.prescription?.medicine_name;
+    const warnDiff = !dOff.warning && !!dOn.warning;
+
+    document.getElementById('cmp-without').innerHTML = formatCmp(dOff, false, medDiff);
+    document.getElementById('cmp-with').innerHTML = formatCmp(dOn, true, medDiff);
     document.getElementById('compare-grid').style.display = 'grid';
   } catch(e) {
     showFormErr(e.message); hide('compare-card');
@@ -877,16 +1272,21 @@ async function doCompare() {
   }
 }
 
-function formatCmp(d, hasMem) {
+function formatCmp(d, hasMem, highlightMed) {
   const memHtml = hasMem
     ? (d.memory_used && d.memory_used !== 'Memory disabled (use_memory=false)'
-      ? `<div style="font-size:12px;color:var(--teal);background:var(--teal-lt);padding:8px;border-radius:6px;margin-bottom:10px;">${d.memory_used.replace(/\n/g,'<br>')}</div>`
+      ? `<div style="font-size:12px;color:var(--teal);background:var(--teal-lt);padding:8px 10px;border-radius:6px;margin-bottom:10px;">${d.memory_used.replace(/\n/g,'<br>')}</div>`
       : '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">No memories recalled</div>')
-    : '<div style="font-size:12px;color:var(--amber);margin-bottom:10px;">Memory disabled — reasoning from symptoms only</div>';
+    : '<div style="font-size:12px;color:var(--amber);background:var(--amber-lt);padding:8px 10px;border-radius:6px;margin-bottom:10px;">Memory disabled — reasoning from symptoms only</div>';
 
   const warningHtml = d.warning
-    ? `<div class="alert alert-red" style="margin-bottom:10px;"><span class="alert-icon">🚨</span>${d.warning}</div>`
+    ? `<div class="alert alert-red" style="margin-bottom:10px;font-size:12px;padding:8px 10px;"><span class="alert-icon">🚨</span>${d.warning}</div>`
     : '';
+
+  const medName = d.prescription?.medicine_name || '—';
+  const medHtml = highlightMed
+    ? `<span class="diff-highlight">${medName}</span>`
+    : medName;
 
   return `
     ${warningHtml}
@@ -895,7 +1295,7 @@ function formatCmp(d, hasMem) {
     <div class="result-label">Diagnosis</div>
     <div style="font-size:14px;font-weight:600;margin-bottom:10px;">${d.ai_diagnosis||'—'}</div>
     <div class="result-label">Prescription</div>
-    <div style="font-size:15px;font-weight:700;color:var(--teal);margin-bottom:4px;">${d.prescription?.medicine_name||'—'}</div>
+    <div style="font-size:15px;font-weight:700;color:var(--teal);margin-bottom:4px;">${medHtml}</div>
     <div style="font-size:13px;color:var(--muted);">${d.prescription?.dosage||'—'}</div>
   `;
 }
@@ -921,7 +1321,7 @@ async function loadRisk() {
     document.getElementById('risk-result').textContent = data.summary || 'No summary available.';
     show('risk-result');
   } catch(e) {
-    setText('risk-err-text', e.message);
+    setText('risk-err-text', `Connection error: ${e.message}`);
     show('risk-err');
   } finally {
     hide('risk-loading');
@@ -946,24 +1346,26 @@ async function loadPending() {
 
     if (list.length === 0) {
       show('pending-empty');
-      hide('pending-table');
+      hide('pending-cards');
     } else {
       hide('pending-empty');
-      const tbody = document.getElementById('pending-body');
-      tbody.innerHTML = list.map(p => `
-        <tr>
-          <td><strong>${p.patient_id}</strong></td>
-          <td>${p.medicine_name}</td>
-          <td>${p.dosage || '—'}</td>
-          <td><span style="font-size:12px;font-weight:600;color:var(--amber);">Pending</span></td>
-          <td>
-            <button class="btn btn-green btn-sm" onclick="doDispense('${p.prescription_id}', this)">
-              Dispense
+      const container = document.getElementById('pending-cards');
+      container.innerHTML = list.map(p => `
+        <div class="rx-card">
+          <div class="rx-card-patient">👤 ${p.patient_id}</div>
+          <div class="rx-card-drug">${p.medicine_name}</div>
+          <div class="rx-card-dose">${p.dosage || '—'}</div>
+          <div class="rx-card-time">Rx: ${p.prescription_id}</div>
+          <div class="rx-card-footer">
+            <span class="status-pill pill-pending">Pending</span>
+            <span style="flex:1;"></span>
+            <button class="btn btn-green" id="disp-${p.prescription_id}" onclick="doDispense('${p.prescription_id}', this)">
+              💊 Dispense
             </button>
-          </td>
-        </tr>
+          </div>
+        </div>
       `).join('');
-      show('pending-table');
+      show('pending-cards');
     }
   } catch(e) {
     console.warn('loadPending error:', e);
@@ -988,31 +1390,35 @@ async function doDispense(rxId, btnEl) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showDispenseMsg('red', `❌ ${data.detail || 'Dispense failed'}`);
-      btnEl.disabled = false; btnEl.textContent = 'Dispense';
+      showDispenseMsg('red', `${data.detail || 'Dispense failed'}`);
+      btnEl.disabled = false; btnEl.textContent = '💊 Dispense';
       return;
     }
 
     if (data.substitution) {
       const alt = data.substitution.alternative || 'unknown';
       const reason = data.substitution.reason || '';
-      showDispenseMsg('amber', `⚠️ Out of stock: ${data.original_medicine}. Suggested alternative: ${alt}. ${reason}`);
+      showDispenseMsg('amber', `Out of stock: ${data.original_medicine}. Suggested alternative: <strong>${alt}</strong> (same class). ${reason}`);
     } else {
-      showDispenseMsg('green', `✅ Dispensed ${data.dispensed_medicine} for ${data.patient_id}. ${data.stock_warning || ''}`);
+      showDispenseMsg('green', `Dispensed <strong>${data.dispensed_medicine}</strong> for ${data.patient_id}.`);
+      if (data.stock_warning) {
+        showToast(`📦 Restock alert: ${data.dispensed_medicine}`, 'amber', 5000);
+      }
     }
 
     loadPending();
     loadInventory();
   } catch(e) {
-    showDispenseMsg('red', `❌ ${e.message}`);
-    btnEl.disabled = false; btnEl.textContent = 'Dispense';
+    showDispenseMsg('red', e.message);
+    btnEl.disabled = false; btnEl.textContent = '💊 Dispense';
   }
 }
 
 function showDispenseMsg(type, msg) {
   const el = document.getElementById('dispense-msg');
+  const icon = type==='green' ? '✅' : type==='amber' ? '⚠️' : '❌';
   el.className = `alert alert-${type}`;
-  el.innerHTML = `<span class="alert-icon">${type==='green'?'✅':type==='amber'?'⚠️':'❌'}</span>${msg}`;
+  el.innerHTML = `<span class="alert-icon">${icon}</span><div>${msg}</div>`;
   show('dispense-msg');
   setTimeout(() => hide('dispense-msg'), 8000);
 }
@@ -1024,25 +1430,47 @@ async function loadInventory() {
     const res = await fetch(`${API}/inventory`, { headers: h });
     if (!res.ok) return;
     const data = await res.json();
-    const inv = data.inventory || [];
+    _inventoryData = data.inventory || [];
     hide('inv-loading');
-
-    const tbody = document.getElementById('inv-body');
-    tbody.innerHTML = inv.map(m => {
-      const low = m.quantity <= m.reorder_threshold;
-      const out = m.quantity === 0;
-      const cls = out ? 'low-stock' : low ? 'low-stock' : '';
-      const status = out
-        ? '<span style="color:var(--red);font-weight:600;">Out of Stock</span>'
-        : low
-        ? '<span style="color:var(--amber);font-weight:600;">Low Stock</span>'
-        : '<span style="color:var(--green);">In Stock</span>';
-      return `<tr class="${cls}"><td>${m.medicine_name}</td><td>${m.quantity}</td><td>${m.reorder_threshold}</td><td>${status}</td></tr>`;
-    }).join('');
-    show('inv-table');
+    renderInventory(_inventoryData);
   } catch(e) {
     console.warn('loadInventory error:', e);
   }
+}
+
+function renderInventory(inv) {
+  const tbody = document.getElementById('inv-body');
+  if (inv.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No matching medicines</td></tr>';
+    show('inv-table');
+    return;
+  }
+  tbody.innerHTML = inv.map(m => {
+    const out = m.quantity === 0;
+    const low = m.quantity <= m.reorder_threshold;
+    let statusHtml, rowBg;
+    if (out) {
+      statusHtml = '<span style="color:var(--red);font-weight:700;">● Out of Stock</span>';
+      rowBg = 'background:var(--red-lt);';
+    } else if (low) {
+      statusHtml = '<span style="color:var(--amber);font-weight:700;">● Low Stock</span>';
+      rowBg = 'background:var(--amber-lt);';
+    } else {
+      statusHtml = '<span style="color:var(--green);font-weight:600;">● In Stock</span>';
+      rowBg = '';
+    }
+    return `<tr style="${rowBg}"><td>${m.medicine_name}</td><td>${m.quantity}</td><td>${m.reorder_threshold}</td><td>${statusHtml}</td></tr>`;
+  }).join('');
+  show('inv-table');
+}
+
+function filterInventory() {
+  const q = document.getElementById('inv-search').value.toLowerCase();
+  const lowOnly = document.getElementById('inv-low-only').checked;
+  let filtered = _inventoryData;
+  if (q) filtered = filtered.filter(m => m.medicine_name.toLowerCase().includes(q));
+  if (lowOnly) filtered = filtered.filter(m => m.quantity <= m.reorder_threshold);
+  renderInventory(filtered);
 }
 
 /* ── Boot ── */
@@ -1052,8 +1480,5 @@ async function loadInventory() {
   loadInventory();
 })();
 </script>
-<footer style="text-align:center; padding:18px 24px 22px; color:var(--muted); font-size:0.82rem; border-top:1px solid var(--border); margin-top:32px; background:var(--card-bg);">
-  ⚕️ <strong>Decision support only.</strong> A licensed doctor must review every prescription before it reaches a patient. All patient data in this demo is fully synthetic.
-</footer>
 </body>
 </html>
