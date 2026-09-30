@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Clinic Memory Assistant</title>
-  <meta name="description" content="AI-powered clinical decision support with Hindsight persistent memory.">
+  <title>Clinic Memory — Family Clinic Memory Assistant</title>
+  <meta name="description" content="AI-powered clinical decision support with Hindsight persistent memory — safe, auditable, human-in-the-loop.">
+  <meta property="og:title" content="Family Clinic Memory Assistant">
+  <meta property="og:description" content="Clinical AI with persistent patient memory. Every visit builds on the last.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ══════════════════════════════════════════════════════════════
+       DESIGN SYSTEM — Clinical Intelligence
+       ══════════════════════════════════════════════════════════════ */
+
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,13 +21,19 @@
     :root {
       --bg: #f6f8fa;
       --surface: #ffffff;
+      --surface-raised: #ffffff;
       --border: #e5e9ef;
+      --border-subtle: #f0f2f5;
       --text: #0f172a;
+      --text-secondary: #334155;
       --muted: #64748b;
+      --faint: #94a3b8;
       --primary: #0f766e;
+      --primary-hover: #0d6560;
       --primary-soft: #e6f4f1;
       --primary-mid: #b2dfdb;
       --danger: #b42318;
+      --danger-hover: #991b1b;
       --danger-soft: #fef3f2;
       --danger-bd: #fecdca;
       --warn: #b54708;
@@ -32,9 +44,15 @@
       --ok-bd: #abefc6;
       --blue: #1d4ed8;
       --blue-soft: #eff6ff;
-      --radius: 10px;
-      --shadow: 0 1px 2px rgba(15,23,42,.04);
-      /* Aliases for JS-generated inline styles */
+      --purple: #7c3aed;
+      --purple-soft: #f5f3ff;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --shadow-md: 0 4px 6px -1px rgba(15,23,42,.06), 0 2px 4px -2px rgba(15,23,42,.04);
+      --transition: 150ms ease;
+      /* Aliases for backward compat with JS inline styles */
       --card-bg: var(--surface);
       --teal: var(--primary);
       --teal-lt: var(--primary-soft);
@@ -49,6 +67,13 @@
       --green-lt: var(--ok-soft);
       --green-bd: var(--ok-bd);
       --blue-lt: var(--blue-soft);
+      /* Layout */
+      --sidebar-w: 232px;
+      --topbar-h: 52px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
 
     /* ── Typography ── */
@@ -60,7 +85,21 @@
       line-height: 1.5;
       font-size: 14px;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
+    h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+    h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; }
+    h3 { font-size: 13px; font-weight: 600; }
+    .text-sm { font-size: 13px; }
+    .text-xs { font-size: 12px; }
+    .text-xxs { font-size: 11px; }
+    .text-muted { color: var(--muted); }
+    .text-faint { color: var(--faint); }
+    .text-primary { color: var(--primary); }
+    .text-danger { color: var(--danger); }
+    .fw-500 { font-weight: 500; }
+    .fw-600 { font-weight: 600; }
+    .mono { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 12px; }
 
     /* ── Inline SVG icons ── */
     .i {
@@ -70,20 +109,110 @@
       vertical-align: -3px;
     }
     .i-sm { width: 16px; height: 16px; vertical-align: -2px; }
+    .i-xs { width: 14px; height: 14px; vertical-align: -2px; }
     .i-lg { width: 20px; height: 20px; vertical-align: -4px; }
 
-    /* ── Layout ── */
-    .container { max-width: 1120px; margin: 0 auto; padding: 24px; }
-    .page { display: none; }
-    .page.active { display: block; }
-    .two-col { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
-    @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+    /* ══════════════════════════════════════════════════════════════
+       LAYOUT — Sidebar + Content
+       ══════════════════════════════════════════════════════════════ */
 
-    /* ── Top bar ── */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 200;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 32px; height: 32px; background: var(--primary);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .brand-mark .i { stroke: #fff; width: 16px; height: 16px; }
+    .brand-text { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; line-height: 1.2; }
+    .brand-sub { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+    .sidebar-nav {
+      padding: 8px;
+      flex: 1;
+    }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: var(--faint);
+      text-transform: uppercase; letter-spacing: .08em;
+      padding: 12px 10px 4px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      border: none; background: none; width: 100%; text-align: left;
+      font-family: inherit;
+      position: relative;
+    }
+    .nav-item:hover { background: var(--bg); color: var(--text); }
+    .nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+    .nav-item .i { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 10px; font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 100px;
+      background: var(--danger-soft); color: var(--danger);
+    }
+    .nav-badge-warn { background: var(--warn-soft); color: var(--warn); }
+
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .status-row {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted); font-weight: 500;
+      padding: 3px 0;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .dot-green { background: var(--ok); }
+    .dot-amber { background: var(--warn); }
+    .dot-red { background: var(--danger); }
+    .dot-pulse { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Main content area ── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
     .topbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      height: 56px;
+      height: var(--topbar-h);
       display: flex;
       align-items: center;
       padding: 0 24px;
@@ -92,24 +221,7 @@
       top: 0;
       z-index: 100;
     }
-    .logo-mark {
-      width: 30px; height: 30px; background: var(--primary);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .logo-mark .i { stroke: #fff; width: 16px; height: 16px; }
-    .topbar-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
-    .topbar-tabs {
-      display: flex; background: var(--bg); border-radius: 8px; padding: 3px;
-      border: 1px solid var(--border); margin-left: 20px;
-    }
-    .tab-btn {
-      padding: 6px 16px; border: none; background: transparent;
-      font-size: 13px; font-weight: 500; color: var(--muted);
-      cursor: pointer; border-radius: 6px; transition: all 120ms;
-      font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
-    }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+    .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
     .topbar-spacer { flex: 1; }
     .topbar-pill {
       font-size: 11px; font-weight: 600; padding: 4px 10px;
@@ -120,17 +232,30 @@
     .pill-demo { background: var(--warn-soft); color: var(--warn); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
     .green-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
 
+    /* ── Page containers ── */
+    .page-content { padding: 24px; flex: 1; max-width: 1200px; width: 100%; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Two-column layout ── */
+    .two-col { display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+    @media (max-width: 1024px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ══════════════════════════════════════════════════════════════
+       COMPONENTS
+       ══════════════════════════════════════════════════════════════ */
+
     /* ── Card ── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
     }
     .card-header {
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
       display: flex;
@@ -138,35 +263,68 @@
       gap: 8px;
     }
     .card-header .i { color: var(--muted); }
-    .card-body { padding: 18px; }
-    .card + .card { margin-top: 16px; }
+    .card-body { padding: 16px; }
+    .card + .card { margin-top: 14px; }
+    .card-flush > .card-body { padding: 0; }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color var(--transition);
+    }
+    .stat-card:hover { border-color: var(--primary-mid); }
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon .i { width: 18px; height: 18px; }
+    .stat-icon-primary { background: var(--primary-soft); color: var(--primary); }
+    .stat-icon-warn { background: var(--warn-soft); color: var(--warn); }
+    .stat-icon-danger { background: var(--danger-soft); color: var(--danger); }
+    .stat-icon-ok { background: var(--ok-soft); color: var(--ok); }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
+    .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 2px; }
 
     /* ── Form controls ── */
     label {
       display: block;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: .04em;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
     select, input[type="text"], textarea {
       width: 100%;
       height: 38px;
       padding: 0 12px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       font-size: 14px;
       font-family: inherit;
       color: var(--text);
       background: var(--surface);
-      transition: border-color 120ms, box-shadow 120ms;
+      transition: border-color var(--transition), box-shadow var(--transition);
     }
     select:focus, input[type="text"]:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(15,118,110,.12);
+      box-shadow: 0 0 0 3px rgba(15,118,110,.1);
     }
     textarea { resize: vertical; min-height: 80px; height: auto; padding: 10px 12px; }
     .form-group { margin-bottom: 14px; }
@@ -181,12 +339,13 @@
     .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle-slider {
       position: absolute; cursor: pointer; inset: 0;
-      background: #cbd5e1; border-radius: 20px; transition: background 120ms;
+      background: #cbd5e1; border-radius: 20px; transition: background var(--transition);
     }
     .toggle-slider::before {
       content: ''; position: absolute; left: 2px; top: 2px;
       width: 16px; height: 16px; background: white;
-      border-radius: 50%; transition: transform 120ms;
+      border-radius: 50%; transition: transform var(--transition);
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
     }
     .toggle input:checked + .toggle-slider { background: var(--primary); }
     .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
@@ -194,21 +353,26 @@
     /* ── Buttons ── */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      height: 38px; padding: 0 18px;
-      border: 1px solid transparent; border-radius: 8px;
+      height: 36px; padding: 0 16px;
+      border: 1px solid transparent; border-radius: var(--radius);
       font-size: 13px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: all 120ms; white-space: nowrap;
+      cursor: pointer; transition: all var(--transition); white-space: nowrap;
+      text-decoration: none;
     }
-    .btn:hover:not(:disabled) { opacity: 0.88; }
-    .btn:active:not(:disabled) { transform: scale(0.98); }
-    .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(15,118,110,.3); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(15,118,110,.2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
     .btn-teal { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .btn-outline { background: var(--surface); border-color: var(--border); color: var(--text); }
-    .btn-outline:hover:not(:disabled) { background: var(--bg); opacity: 1; }
+    .btn-outline { background: var(--surface); border-color: var(--border); color: var(--text-secondary); }
+    .btn-outline:hover:not(:disabled) { background: var(--bg); border-color: var(--muted); }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg); color: var(--text); }
     .btn-green { background: var(--ok); color: #fff; border-color: var(--ok); }
     .btn-red { background: var(--danger); color: #fff; border-color: var(--danger); }
-    .btn-sm { height: 32px; padding: 0 14px; font-size: 12px; }
+    .btn-sm { height: 32px; padding: 0 12px; font-size: 12px; }
     .btn-full { width: 100%; }
 
     /* ── Spinner ── */
@@ -226,45 +390,57 @@
 
     /* ── Alert banners ── */
     .alert {
-      padding: 12px 16px; border-radius: 8px;
-      font-size: 13px; font-weight: 500; margin-bottom: 14px;
+      padding: 10px 14px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500; margin-bottom: 12px;
       display: flex; align-items: flex-start; gap: 8px; line-height: 1.4;
     }
     .alert-red { background: var(--danger-soft); border: 1px solid var(--danger-bd); color: var(--danger); }
     .alert-amber { background: var(--warn-soft); border: 1px solid var(--warn-bd); color: var(--warn); }
     .alert-green { background: var(--ok-soft); border: 1px solid var(--ok-bd); color: var(--ok); }
-    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-icon { flex-shrink: 0; margin-top: 1px; }
     .hide { display: none !important; }
 
     /* ── Chips ── */
-    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
     .chip {
-      font-size: 12px; padding: 3px 10px;
+      font-size: 11px; padding: 3px 10px;
       background: var(--primary-soft); color: var(--primary);
-      border-radius: 100px; font-weight: 500; line-height: 1.4; max-width: 100%;
+      border-radius: 100px; font-weight: 600; line-height: 1.3; max-width: 100%;
     }
     .chip-new { background: var(--warn-soft); color: var(--warn); }
-    .chip-red { background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+    .chip-red { background: var(--danger-soft); color: var(--danger); font-weight: 700; }
     .chip-blue { background: var(--blue-soft); color: var(--blue); }
     .chip-green { background: var(--ok-soft); color: var(--ok); }
     .chip-muted { background: #f1f5f9; color: var(--muted); }
 
     /* ── Result sections ── */
-    .result-section { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .result-section { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle); }
     .result-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .result-label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .04em; color: var(--muted); margin-bottom: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--faint); margin-bottom: 5px;
+      display: flex; align-items: center; gap: 5px;
     }
     .result-value { font-size: 14px; color: var(--text); }
     .result-value-lg { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; }
     .result-value-med { font-size: 14px; font-weight: 600; color: var(--primary); }
 
+    /* ── Source badges ── */
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .05em; padding: 2px 8px; border-radius: 4px;
+    }
+    .source-ai { background: var(--purple-soft); color: var(--purple); }
+    .source-engine { background: var(--danger-soft); color: var(--danger); }
+    .source-doctor { background: var(--ok-soft); color: var(--ok); }
+
     /* Rx table */
     .rx-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
-    .rx-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--primary-soft); }
-    .rx-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .rx-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .rx-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); font-size: 13px; }
     .rx-table td:first-child { font-weight: 600; color: var(--primary); }
+    .rx-table tr:last-child td { border-bottom: none; }
 
     /* ── Draft edit ── */
     .draft-edit-row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -273,26 +449,79 @@
 
     /* ── Status line ── */
     .status-line {
-      padding: 10px 14px; border-radius: 8px;
+      padding: 10px 14px; border-radius: var(--radius);
       font-size: 13px; font-weight: 600; text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .status-sent { background: var(--ok-soft); color: var(--ok); border: 1px solid var(--ok-bd); }
     .status-rejected { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-bd); }
 
+    /* ── Safety block ── */
+    .safety-block {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger-bd);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .safety-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .safety-icon {
+      width: 36px; height: 36px;
+      background: var(--danger);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .safety-icon .i { stroke: #fff; width: 18px; height: 18px; }
+    .safety-title { font-size: 14px; font-weight: 700; color: var(--danger); }
+    .safety-subtitle { font-size: 12px; color: var(--danger); opacity: .8; }
+
+    /* Safety findings */
+    .finding-item { padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 4px; font-weight: 500; display: flex; align-items: flex-start; gap: 6px; }
+    .finding-contra { background: #fff; border: 1px solid var(--danger-bd); color: var(--danger); }
+    .finding-major { background: #fff; border: 1px solid #fed7aa; color: #c2410c; }
+    .finding-moderate { background: #fff; border: 1px solid var(--warn-bd); color: var(--warn); }
+    .finding-warning { background: #fff; border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── AI output card ── */
+    .ai-card {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    }
+
+    /* ── Doctor decision card ── */
+    .decision-card {
+      border: 2px solid var(--primary-mid);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    .decision-header {
+      padding: 12px 16px;
+      background: var(--primary-soft);
+      border-bottom: 1px solid var(--primary-mid);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+    }
+
     /* ── Compare grid ── */
     .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
-    .compare-col { border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+    .compare-col { border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); }
     .compare-col-on { background: var(--primary-soft); border-color: var(--primary-mid); }
     .compare-col-off { background: var(--bg); }
     .compare-label {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .04em; margin-bottom: 8px; padding-bottom: 6px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; margin-bottom: 8px; padding-bottom: 6px;
       border-bottom: 1px solid var(--border);
     }
     .compare-label-on { color: var(--primary); }
     .compare-label-off { color: var(--muted); }
-    .demo-caption { font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
+    .demo-caption { font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: var(--radius); margin-bottom: 10px; text-align: center; }
     .caption-step1 { background: var(--bg); color: var(--muted); border: 1px dashed var(--border); }
     .caption-step2 { background: var(--primary-soft); color: var(--primary); border: 1px dashed var(--primary-mid); }
 
@@ -301,67 +530,75 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-left: 3px solid var(--primary);
-      border-radius: 0 var(--radius) var(--radius) 0;
-      padding: 14px 20px;
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      padding: 12px 16px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: var(--shadow);
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
     }
     .story-body { flex: 1; }
-    .story-text { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.5; }
+    .story-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); line-height: 1.5; }
+    .story-text strong { color: var(--primary); }
     .story-expand {
       font-size: 12px; color: var(--primary); font-weight: 500;
-      cursor: pointer; margin-top: 6px; display: inline-block;
+      cursor: pointer; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;
       border: none; background: none; font-family: inherit;
-      text-decoration: none; transition: color 120ms;
+      text-decoration: none; transition: color var(--transition);
     }
     .story-expand:hover { color: var(--text); }
     .story-detail {
-      font-size: 13px; color: var(--muted); margin-top: 10px;
-      padding-top: 10px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--muted); margin-top: 8px;
+      padding-top: 8px; border-top: 1px solid var(--border-subtle);
       line-height: 1.6; display: none;
     }
 
     /* ── Patient snapshot ── */
     .patient-snapshot {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow);
-      padding: 14px 18px; margin-bottom: 16px;
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+      padding: 14px 16px; margin-bottom: 14px;
     }
-    .snapshot-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .snapshot-name { font-size: 15px; font-weight: 700; color: var(--text); }
     .snapshot-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     /* ── Memory trace ── */
     .memory-trace {
       display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted); padding: 6px 10px;
-      background: var(--bg); border-radius: 6px; margin-top: 6px;
+      background: var(--bg); border-radius: 6px; margin-top: 8px;
       font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     }
     .trace-step { display: inline-flex; align-items: center; gap: 3px; }
     .trace-ok { color: var(--ok); }
     .trace-arrow { color: #cbd5e1; }
-    .trace-saved { color: var(--primary); font-weight: 600; font-size: 10px; font-family: 'Inter', system-ui, sans-serif; }
+    .trace-saved { color: var(--primary); font-weight: 600; font-size: 10px; font-family: 'Inter', system-ui, sans-serif; display: inline-flex; align-items: center; gap: 3px; }
 
-    /* ── Safety findings ── */
-    .finding-item { padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 4px; }
-    .finding-contra { background: var(--danger-soft); border-left: 3px solid var(--danger); color: var(--danger); }
-    .finding-major { background: #fff7ed; border-left: 3px solid #ea580c; color: #c2410c; }
-    .finding-moderate { background: var(--warn-soft); border-left: 3px solid var(--warn); color: var(--warn); }
-    .finding-warning { background: var(--bg); border-left: 3px solid #94a3b8; color: var(--muted); }
+    /* ── Warning banner ── */
+    .warning-banner {
+      background: var(--danger-soft); border: 1px solid var(--danger-bd);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .warning-icon {
+      width: 36px; height: 36px; background: var(--danger); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .warning-icon .i { stroke: #fff; width: 20px; height: 20px; }
+    .warning-title { font-size: 14px; font-weight: 700; color: var(--danger); margin-bottom: 2px; }
+    .warning-body { font-size: 13px; color: var(--danger); line-height: 1.4; }
 
     /* ── Empty state ── */
-    .empty-state { text-align: center; padding: 48px 20px; }
+    .empty-state { text-align: center; padding: 40px 20px; }
     .empty-icon {
-      width: 48px; height: 48px; background: var(--primary-soft);
-      border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 12px; color: var(--primary);
+      width: 44px; height: 44px; background: var(--bg);
+      border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 12px; color: var(--muted);
     }
-    .empty-icon .i { width: 22px; height: 22px; }
+    .empty-icon .i { width: 20px; height: 20px; }
     .empty-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .empty-sub { font-size: 13px; color: var(--muted); }
+    .empty-sub { font-size: 13px; color: var(--muted); max-width: 280px; margin: 0 auto; }
 
     /* ── Card loading ── */
     .card-loading {
@@ -378,13 +615,14 @@
     .skel-chip { display: inline-block; height: 22px; width: 100px; border-radius: 100px; margin-right: 6px; }
 
     /* ── Risk profile ── */
-    .risk-headline { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
-    .risk-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text); line-height: 1.6; }
+    .risk-headline { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
+    .risk-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
     .risk-list li { margin-bottom: 2px; }
     .raw-toggle {
       font-size: 12px; color: var(--muted); cursor: pointer;
       border: none; background: none; font-family: inherit;
-      padding: 4px 0; transition: color 120ms;
+      padding: 4px 0; transition: color var(--transition);
+      display: inline-flex; align-items: center; gap: 4px;
     }
     .raw-toggle:hover { color: var(--text); }
     .raw-text {
@@ -395,7 +633,7 @@
     }
 
     /* ── Advice bullets ── */
-    .advice-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text); line-height: 1.5; }
+    .advice-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
     .advice-list li { margin-bottom: 2px; }
     .follow-up-line { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
 
@@ -406,21 +644,22 @@
     }
     .rx-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px;
+      border-radius: var(--radius); padding: 14px;
       display: flex; flex-direction: column; gap: 6px;
-      transition: border-color 120ms;
+      transition: border-color var(--transition), box-shadow var(--transition);
     }
-    .rx-card:hover { border-color: var(--primary-mid); }
-    .rx-card-patient { font-size: 13px; font-weight: 600; color: var(--text); }
-    .rx-card-drug { font-size: 15px; font-weight: 600; color: var(--primary); }
+    .rx-card:hover { border-color: var(--primary-mid); box-shadow: var(--shadow); }
+    .rx-card-patient { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+    .rx-card-drug { font-size: 15px; font-weight: 700; color: var(--primary); }
     .rx-card-dose { font-size: 13px; color: var(--muted); }
-    .rx-card-time { font-size: 11px; color: var(--muted); }
-    .rx-card-footer { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .rx-card-time { font-size: 11px; color: var(--faint); }
+    .rx-card-footer { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
     .status-pill {
-      font-size: 11px; font-weight: 600; padding: 3px 10px;
-      border-radius: 100px; text-transform: uppercase; letter-spacing: .03em;
+      font-size: 10px; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px; text-transform: uppercase; letter-spacing: .04em;
     }
     .pill-pending { background: var(--warn-soft); color: var(--warn); }
+    .pill-fulfilled { background: var(--ok-soft); color: var(--ok); }
 
     /* ── Inventory ── */
     .inv-filters {
@@ -436,17 +675,17 @@
     }
     .inv-search {
       width: 100%; height: 34px; padding: 0 12px 0 32px;
-      border: 1px solid var(--border); border-radius: 8px;
+      border: 1px solid var(--border); border-radius: var(--radius);
       font-size: 13px; font-family: inherit; color: var(--text); background: var(--bg);
-      transition: border-color 120ms, box-shadow 120ms;
+      transition: border-color var(--transition), box-shadow var(--transition);
     }
-    .inv-search:focus { outline: none; border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 2px rgba(15,118,110,.12); }
+    .inv-search:focus { outline: none; border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px rgba(15,118,110,.1); }
     .filter-toggle {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 12px; font-weight: 500; color: var(--muted);
       cursor: pointer; user-select: none; padding: 5px 12px;
       border: 1px solid var(--border); border-radius: 100px; background: var(--surface);
-      transition: all 120ms;
+      transition: all var(--transition);
     }
     .filter-toggle:has(input:checked) { background: var(--warn-soft); border-color: var(--warn-bd); color: var(--warn); }
     .filter-toggle input { accent-color: var(--warn); width: 13px; height: 13px; cursor: pointer; margin: 0; }
@@ -454,25 +693,27 @@
     /* Tables */
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th {
-      text-align: left; font-size: 11px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: .04em;
-      color: var(--muted); padding: 10px 14px;
+      text-align: left; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--faint); padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; background: var(--surface);
     }
     th.num { text-align: right; }
-    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; }
     tr:last-child td { border-bottom: none; }
-    tbody tr { transition: background 120ms; }
+    tbody tr { transition: background var(--transition); }
     tbody tr:hover { background: var(--bg); }
 
     /* ── Toast ── */
     .toast {
       position: fixed; bottom: 24px; right: 24px; z-index: 999;
       padding: 12px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,.15);
-      transform: translateY(100px); opacity: 0; transition: transform .25s ease, opacity .25s ease;
+      box-shadow: var(--shadow-md);
+      transform: translateY(100px); opacity: 0;
+      transition: transform .25s ease, opacity .25s ease;
+      display: flex; align-items: center; gap: 8px;
     }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast-green { background: var(--ok); color: #fff; }
@@ -484,380 +725,556 @@
 
     /* ── Footer ── */
     .site-footer {
-      text-align: center; padding: 16px 24px; color: var(--muted);
-      font-size: 12px; border-top: 1px solid var(--border);
-      margin-top: 40px; background: var(--surface); line-height: 1.5;
+      text-align: center; padding: 14px 24px; color: var(--faint);
+      font-size: 11px; border-top: 1px solid var(--border-subtle);
+      margin-top: auto; line-height: 1.5;
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+    }
+    .footer-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
+
+    /* ── Confirmation dialog ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.4);
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .confirm-dialog {
+      background: var(--surface); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,.15); padding: 24px;
+      max-width: 380px; width: 90%;
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .confirm-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .confirm-text { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Responsive: hide sidebar on small screens ── */
+    .sidebar-toggle {
+      display: none; border: none; background: none; cursor: pointer;
+      padding: 6px; color: var(--text);
+    }
+    @media (max-width: 860px) {
+      .sidebar { transform: translateX(-100%); transition: transform .2s ease; }
+      .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
+      .main-content { margin-left: 0; }
+      .sidebar-toggle { display: flex; }
+      .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 199; }
     }
 
-    /* ── Warning banner (result) ── */
-    .warning-banner {
-      background: var(--danger-soft); border: 1px solid var(--danger-bd);
-      border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
-      display: flex; align-items: flex-start; gap: 12px;
+    /* ── Print-friendly ── */
+    @media print {
+      .sidebar, .topbar, .story-banner, .btn, .toggle-row { display: none !important; }
+      .main-content { margin-left: 0; }
     }
-    .warning-icon {
-      width: 36px; height: 36px; background: var(--danger); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .warning-icon .i { stroke: #fff; width: 20px; height: 20px; }
-    .warning-title { font-size: 14px; font-weight: 600; color: var(--danger); margin-bottom: 2px; }
-    .warning-body { font-size: 13px; color: var(--danger); line-height: 1.4; }
   </style>
 </head>
 <body>
 
-<!-- ── TOP BAR ── -->
-<div class="topbar">
-  <div class="logo-mark">
-    <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+<div class="app-layout">
+
+<!-- ══════════════════════════════════════════════════════════════
+     SIDEBAR
+     ══════════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">
+      <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    </div>
+    <div>
+      <div class="brand-text">Clinic Memory</div>
+      <div class="brand-sub">Decision Support</div>
+    </div>
   </div>
-  <span class="topbar-name">Family Clinic Memory Assistant</span>
-  <div class="topbar-tabs">
-    <button class="tab-btn active" onclick="switchTab('doctor')" id="tab-doctor">
-      <svg class="i i-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workflows</div>
+
+    <button class="nav-item active" onclick="switchTab('doctor')" id="tab-doctor">
+      <svg class="i" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><path d="M22 10 A2 2 0 0 0 20 8 A2 2 0 0 0 18 10"/></svg>
       Doctor Desk
     </button>
-    <button class="tab-btn" onclick="switchTab('pharmacy')" id="tab-pharmacy">
-      <svg class="i i-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+
+    <button class="nav-item" onclick="switchTab('patients')" id="tab-patients">
+      <svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Patients
+      <span class="nav-badge nav-badge-warn" id="nav-patient-count" style="display:none;"></span>
+    </button>
+
+    <button class="nav-item" onclick="switchTab('pharmacy')" id="tab-pharmacy">
+      <svg class="i" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
       Pharmacy
+      <span class="nav-badge" id="nav-pending-count" style="display:none;"></span>
     </button>
-  </div>
-  <div class="topbar-spacer"></div>
-  <span class="topbar-pill pill-demo" id="demo-tag">Demo</span>
-  <span class="topbar-pill pill-mem"><span class="green-dot"></span> Memory: Hindsight</span>
-</div>
 
-<!-- ── TOAST ── -->
-<div class="toast" id="toast"></div>
+    <button class="nav-item" onclick="switchTab('inventory')" id="tab-inventory">
+      <svg class="i" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+      Inventory
+      <span class="nav-badge nav-badge-warn" id="nav-low-stock" style="display:none;"></span>
+    </button>
+  </nav>
 
-<!-- ╔══════════════════════════════════════════════════════════════╗ -->
-<!-- ║  DOCTOR PAGE                                                 ║ -->
-<!-- ╚══════════════════════════════════════════════════════════════╝ -->
-<div class="container page active" id="page-doctor">
-
-  <!-- Story banner -->
-  <div class="story-banner" id="story-banner">
-    <div class="story-body">
-      <div class="story-text">
-        40 patients waiting. Will the doctor remember this patient's penicillin allergy? <strong>Hindsight does.</strong>
-      </div>
-      <button class="story-expand" onclick="toggleStoryDetail()">
-        Why memory matters
-        <svg class="i i-sm" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
-      <div class="story-detail" id="story-detail">
-        Without persistent memory, every visit starts from scratch — the AI has no context about allergies,
-        past prescriptions, or chronic conditions. With Hindsight, each visit builds on the last: allergy
-        warnings fire automatically, drug interactions are caught, and the doctor gets a personalised
-        recommendation in seconds. <strong>More visits = smarter answers.</strong>
-      </div>
+  <div class="sidebar-footer">
+    <div class="status-row" id="status-hindsight">
+      <span class="status-dot dot-green dot-pulse"></span> Hindsight connected
     </div>
-    <button class="btn btn-teal btn-sm" id="btn-demo-story" onclick="runDemoStory()">
-      <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-      Run demo
+    <div class="status-row" id="status-ai">
+      <span class="status-dot dot-green dot-pulse"></span> AI online
+    </div>
+    <div class="status-row" id="status-demo" style="display:none;">
+      <span class="status-dot dot-amber"></span> Demo mode
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN CONTENT
+     ══════════════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+      <svg class="i" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <span id="demo-progress" class="hide" style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
-      <span class="spinner" style="width:14px;height:14px;"></span>
-      <span id="demo-progress-text">Preparing</span><span class="progress-dots"></span>
-    </span>
+    <span class="topbar-title" id="topbar-title">Doctor Desk</span>
+    <div class="topbar-spacer"></div>
+    <span class="topbar-pill pill-demo" id="demo-tag" style="display:none;">Demo</span>
+    <span class="topbar-pill pill-mem"><span class="green-dot"></span> Hindsight Memory</span>
   </div>
 
-  <div class="two-col">
-    <!-- LEFT: Patient + Form -->
-    <div>
-      <!-- Patient snapshot -->
-      <div class="patient-snapshot hide" id="patient-snapshot">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <svg class="i" viewBox="0 0 24 24" style="color:var(--muted);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <div>
-            <div class="snapshot-name" id="snap-name"></div>
-            <div class="snapshot-meta" id="snap-meta"></div>
-          </div>
-        </div>
-        <div class="chip-list" id="snap-chips" style="margin-top:10px;margin-bottom:0;"></div>
-      </div>
+  <!-- ── TOAST ── -->
+  <div class="toast" id="toast"></div>
 
-      <div class="card">
-        <div class="card-header">
+  <!-- ═══════════════════════════════════════════════════════════
+       DOCTOR PAGE
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="page-content page active" id="page-doctor">
+
+    <!-- Overview stats -->
+    <div class="stats-grid" id="overview-stats">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-primary">
           <svg class="i" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-          New Visit
-          <span style="margin-left:auto;"></span>
-          <span class="chip chip-muted hide" id="visit-count-chip" style="font-size:11px;"></span>
         </div>
-        <div class="card-body">
-          <div class="form-group">
-            <label for="pid">Patient</label>
-            <select id="pid" onchange="onPatientChange()">
-              <option value="">Select a patient</option>
-              <option value="patient_001">patient_001 — Rajesh Kumar (54, T2DM, penicillin allergy)</option>
-              <option value="patient_002">patient_002 — Meera Iyer (29, Stage 1 HTN)</option>
-              <option value="patient_003">patient_003 — New Patient (no history)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="sym">Symptoms</label>
-            <textarea id="sym" placeholder="Describe the patient's symptoms…" rows="3"></textarea>
-          </div>
-          <div class="toggle-row">
-            <label class="toggle" style="margin-bottom:0;">
-              <input type="checkbox" id="use_mem" checked>
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Use Hindsight memory</span>
-          </div>
-          <div id="form-err" class="alert alert-red hide"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span id="form-err-text"></span></div>
-          <button class="btn btn-teal btn-full" id="btn-consult" onclick="doVisit()">Consult</button>
-          <div style="margin-top:8px;">
-            <button class="btn btn-outline btn-full" id="btn-compare" onclick="doCompare()">
-              <svg class="i i-sm" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              Compare with vs without memory
-            </button>
-          </div>
-        </div>
+        <div><div class="stat-value" id="stat-consults">–</div><div class="stat-label">Consultations</div></div>
       </div>
-
-      <!-- Risk Profile -->
-      <div class="card" style="margin-top:16px;">
-        <div class="card-header">
-          <svg class="i" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Patient Risk Profile
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-warn">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
-        <div class="card-body">
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-            Uses <code style="font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);">reflect()</code> to synthesize a longitudinal risk summary.
-          </p>
-          <button class="btn btn-outline btn-sm" id="btn-risk" onclick="loadRisk()">
-            <svg class="i i-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Generate
-          </button>
-          <div id="risk-loading" class="card-loading hide"><div class="spinner"></div> Generating risk profile…</div>
-          <div id="risk-err" class="alert alert-red hide" style="margin-top:12px;"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span id="risk-err-text"></span></div>
-          <div id="risk-result" class="risk-text hide" style="margin-top:12px;"></div>
+        <div><div class="stat-value" id="stat-pending">–</div><div class="stat-label">Awaiting approval</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-danger">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
         </div>
+        <div><div class="stat-value" id="stat-alerts">0</div><div class="stat-label">Safety alerts</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-ok">
+          <svg class="i" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </div>
+        <div><div class="stat-value" id="stat-low-stock">–</div><div class="stat-label">Low-stock medicines</div></div>
       </div>
     </div>
 
-    <!-- RIGHT: Results -->
-    <div>
-      <!-- Empty state -->
-      <div class="card" id="result-empty">
-        <div class="empty-state">
-          <div class="empty-icon">
+    <!-- Story banner -->
+    <div class="story-banner" id="story-banner">
+      <div class="story-body">
+        <div class="story-text">
+          40 patients waiting. Will the doctor remember this patient's penicillin allergy? <strong>Hindsight does.</strong>
+        </div>
+        <button class="story-expand" onclick="toggleStoryDetail()">
+          Why memory matters
+          <svg class="i i-xs" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="story-detail" id="story-detail">
+          Without persistent memory, every visit starts from scratch — the AI has no context about allergies,
+          past prescriptions, or chronic conditions. With Hindsight, each visit builds on the last: allergy
+          warnings fire automatically, drug interactions are caught, and the doctor gets a personalised
+          recommendation in seconds. <strong>More visits = smarter answers.</strong>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-demo-story" onclick="runDemoStory()">
+        <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        Run demo
+      </button>
+      <span id="demo-progress" class="hide" style="font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;">
+        <span class="spinner" style="width:14px;height:14px;"></span>
+        <span id="demo-progress-text">Preparing</span><span class="progress-dots"></span>
+      </span>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: Patient + Form -->
+      <div>
+        <!-- Patient snapshot -->
+        <div class="patient-snapshot hide" id="patient-snapshot">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:var(--primary-soft);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg class="i" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div class="snapshot-name" id="snap-name"></div>
+              <div class="snapshot-meta" id="snap-meta"></div>
+            </div>
+          </div>
+          <div class="chip-list" id="snap-chips" style="margin-top:10px;margin-bottom:0;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
             <svg class="i" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+            New Consultation
+            <span style="margin-left:auto;"></span>
+            <span class="chip chip-muted hide" id="visit-count-chip" style="font-size:11px;"></span>
           </div>
-          <div class="empty-title">No consultation yet</div>
-          <div class="empty-sub">Select a patient, describe symptoms, and click Consult — or try Run demo above.</div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="pid">Patient</label>
+              <select id="pid" onchange="onPatientChange()">
+                <option value="">Select a patient</option>
+                <option value="patient_001">patient_001 — Rajesh Kumar (54, T2DM, penicillin allergy)</option>
+                <option value="patient_002">patient_002 — Meera Iyer (29, Stage 1 HTN)</option>
+                <option value="patient_003">patient_003 — New Patient (no history)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="sym">Symptoms</label>
+              <textarea id="sym" placeholder="Describe the patient's presenting symptoms…" rows="3"></textarea>
+            </div>
+            <div class="toggle-row">
+              <label class="toggle" style="margin-bottom:0;">
+                <input type="checkbox" id="use_mem" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Use Hindsight memory</span>
+            </div>
+            <div id="form-err" class="alert alert-red hide"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span><span id="form-err-text"></span></div>
+            <button class="btn btn-primary btn-full" id="btn-consult" onclick="doVisit()">
+              <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><path d="M22 10 A2 2 0 0 0 20 8 A2 2 0 0 0 18 10"/></svg>
+              Consult
+            </button>
+            <div style="margin-top:8px;">
+              <button class="btn btn-outline btn-full btn-sm" id="btn-compare" onclick="doCompare()">
+                <svg class="i i-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Compare: with vs without memory
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Skeleton loading -->
-      <div class="card hide" id="result-loading">
-        <div class="card-header" style="color:var(--muted);"><div class="spinner" style="width:14px;height:14px;"></div> Consulting AI…</div>
-        <div class="card-body">
-          <div class="skeleton skel-line" style="width:70%;"></div>
-          <div class="skeleton skel-block"></div>
-          <div style="display:flex;gap:6px;margin-bottom:10px;"><div class="skeleton skel-chip"></div><div class="skeleton skel-chip" style="width:80px;"></div><div class="skeleton skel-chip" style="width:120px;"></div></div>
-          <div class="skeleton skel-line" style="width:50%;"></div>
-          <div class="skeleton skel-line-sm"></div>
-        </div>
-      </div>
-
-      <!-- Demo caption -->
-      <div id="demo-caption" class="hide"></div>
-
-      <!-- Main result -->
-      <div class="card hide" id="result-card">
-        <div class="card-header">
-          <svg class="i" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-          Consultation Result
-        </div>
-        <div class="card-body" style="padding:14px 18px;">
-          <!-- 1. Alert banner (only if alert non-empty) -->
-          <div id="warning-banner" class="warning-banner hide">
-            <div class="warning-icon">
-              <svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-            </div>
-            <div>
-              <div class="warning-title" id="warning-title">Allergy Conflict</div>
-              <div class="warning-body" id="warning-text"></div>
-            </div>
-          </div>
-
-          <!-- Safety findings -->
-          <div id="safety-findings" class="hide" style="margin-bottom:10px;">
-            <div id="safety-list"></div>
-          </div>
-
-          <!-- 2. Summary -->
-          <div class="result-section">
-            <div class="result-value-lg" id="r-diag"></div>
-          </div>
-
-          <!-- 3. Prescription table -->
-          <div class="result-section">
-            <div class="result-label">Prescription</div>
-            <div id="rx-table-wrap"></div>
-          </div>
-
-          <!-- 4. Memory chips (max 4) -->
-          <div class="result-section">
-            <div class="result-label">
-              <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-              Memory used
-            </div>
-            <div class="chip-list" id="memory-chips"></div>
-            <div id="memory-empty-note" class="hide" style="font-size:12px;color:var(--muted);font-style:italic;">No history — new patient.</div>
-          </div>
-
-          <!-- 5. Advice + follow-up -->
-          <div class="result-section">
-            <div id="advice-wrap" class="hide">
-              <div class="result-label">Advice</div>
-              <ul class="advice-list" id="r-advice"></ul>
-            </div>
-            <div id="r-followup" class="follow-up-line hide"></div>
-          </div>
-
-          <!-- Memory trace -->
-          <div class="memory-trace" id="memory-trace">
-            <span class="trace-step" id="trace-recall">recall()</span>
-            <span class="trace-arrow">&rarr;</span>
-            <span class="trace-step" id="trace-reason">reason</span>
-            <span class="trace-arrow">&rarr;</span>
-            <span class="trace-step" id="trace-retain">retain()</span>
-            <span class="trace-saved" id="trace-saved" style="margin-left:6px;">
-              <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--ok);vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg>
-              Saved
+        <!-- Risk Profile -->
+        <div class="card" style="margin-top:14px;">
+          <div class="card-header">
+            <svg class="i" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Patient Risk Profile
+            <span class="source-badge source-ai" style="margin-left:auto;">
+              <svg class="i i-xs" viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4c0 2 4 3 4 3s4-1 4-3a4 4 0 0 0-4-4z"/><path d="M12 9v13"/><path d="m5 18 7-4 7 4"/></svg>
+              reflect()
             </span>
           </div>
+          <div class="card-body">
+            <button class="btn btn-outline btn-sm" id="btn-risk" onclick="loadRisk()">
+              <svg class="i i-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Generate risk profile
+            </button>
+            <div id="risk-loading" class="card-loading hide"><div class="spinner"></div> Synthesizing patient history…</div>
+            <div id="risk-err" class="alert alert-red hide" style="margin-top:12px;"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span><span id="risk-err-text"></span></div>
+            <div id="risk-result" class="risk-text hide" style="margin-top:12px;"></div>
+          </div>
+        </div>
+      </div>
 
-          <!-- 6. Bottom action row -->
-          <div id="draft-section" class="hide" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div class="result-label" style="margin-bottom:0;">Edit</div>
-              <span style="font-size:10px;color:var(--warn);font-weight:500;">Doctor review required</span>
+      <!-- RIGHT: Results -->
+      <div>
+        <!-- Empty state -->
+        <div class="card" id="result-empty">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg class="i" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><path d="M22 10 A2 2 0 0 0 20 8 A2 2 0 0 0 18 10"/></svg>
+            </div>
+            <div class="empty-title">Ready for consultation</div>
+            <div class="empty-sub">Select a patient and describe symptoms — or click <strong>Run demo</strong> to see memory in action.</div>
+          </div>
+        </div>
+
+        <!-- Skeleton loading -->
+        <div class="card hide" id="result-loading">
+          <div class="card-header" style="color:var(--muted);"><div class="spinner" style="width:14px;height:14px;"></div> Recalling patient memory and consulting AI…</div>
+          <div class="card-body">
+            <div class="skeleton skel-line" style="width:70%;"></div>
+            <div class="skeleton skel-block"></div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;"><div class="skeleton skel-chip"></div><div class="skeleton skel-chip" style="width:80px;"></div><div class="skeleton skel-chip" style="width:120px;"></div></div>
+            <div class="skeleton skel-line" style="width:50%;"></div>
+            <div class="skeleton skel-line-sm"></div>
+          </div>
+        </div>
+
+        <!-- Demo caption -->
+        <div id="demo-caption" class="hide"></div>
+
+        <!-- ── SAFETY CHECK (deterministic engine) ── -->
+        <div id="safety-block-wrap" class="hide">
+          <div class="safety-block" id="safety-block">
+            <div class="safety-header">
+              <div class="safety-icon">
+                <svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              </div>
+              <div>
+                <div class="safety-title" id="safety-title">Safety Check</div>
+                <div class="safety-subtitle">
+                  <span class="source-badge source-engine">
+                    <svg class="i i-xs" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                    Deterministic engine
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div id="warning-text-detail"></div>
+            <div id="safety-findings-detail"></div>
+          </div>
+        </div>
+
+        <!-- Backward compat hidden elements -->
+        <div id="warning-banner" class="hide"><div id="warning-title" class="hide"></div><div id="warning-text" class="hide"></div></div>
+        <div id="safety-findings" class="hide"><div id="safety-list"></div></div>
+
+        <!-- ── AI CLINICAL OUTPUT ── -->
+        <div class="card ai-card hide" id="result-card">
+          <div class="card-header" style="color:var(--purple);">
+            <svg class="i" viewBox="0 0 24 24" style="color:var(--purple);"><path d="M12 2a4 4 0 0 0-4 4c0 2 4 3 4 3s4-1 4-3a4 4 0 0 0-4-4z"/><path d="M12 9v13"/><path d="m5 18 7-4 7 4"/></svg>
+            AI Clinical Assessment
+            <span class="source-badge source-ai" style="margin-left:auto;">AI-generated</span>
+          </div>
+          <div class="card-body" style="padding:14px 16px;">
+            <!-- Summary -->
+            <div class="result-section">
+              <div class="result-label">Clinical Summary</div>
+              <div class="result-value-lg" id="r-diag"></div>
+            </div>
+
+            <!-- Prescription table -->
+            <div class="result-section">
+              <div class="result-label">Suggested Prescription</div>
+              <div id="rx-table-wrap"></div>
+            </div>
+
+            <!-- Memory chips (max 4) -->
+            <div class="result-section">
+              <div class="result-label">
+                <svg class="i i-xs" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                Memory recalled
+              </div>
+              <div class="chip-list" id="memory-chips"></div>
+              <div id="memory-empty-note" class="hide" style="font-size:12px;color:var(--muted);font-style:italic;">No history — new patient.</div>
+            </div>
+
+            <!-- Advice + follow-up -->
+            <div class="result-section">
+              <div id="advice-wrap" class="hide">
+                <div class="result-label">Advice</div>
+                <ul class="advice-list" id="r-advice"></ul>
+              </div>
+              <div id="r-followup" class="follow-up-line hide"></div>
+            </div>
+
+            <!-- Memory trace -->
+            <div class="memory-trace" id="memory-trace">
+              <span class="trace-step" id="trace-recall">recall()</span>
+              <span class="trace-arrow">&rarr;</span>
+              <span class="trace-step" id="trace-reason">reason</span>
+              <span class="trace-arrow">&rarr;</span>
+              <span class="trace-step" id="trace-retain">retain()</span>
+              <span class="trace-saved" id="trace-saved" style="margin-left:6px;">
+                <svg class="i i-xs" viewBox="0 0 24 24" style="color:var(--ok);"><polyline points="20 6 9 17 4 12"/></svg>
+                Saved
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── DOCTOR DECISION ── -->
+        <div class="decision-card hide" id="decision-card" style="margin-top:14px;">
+          <div class="decision-header">
+            <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Doctor Decision
+            <span class="source-badge source-doctor" style="margin-left:auto;">Human-in-the-loop</span>
+          </div>
+          <div class="card-body" id="draft-section">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:12px;font-weight:600;color:var(--warn);">
+                <svg class="i i-xs" viewBox="0 0 24 24" style="color:var(--warn);vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                Review required before prescription is sent
+              </span>
             </div>
             <div class="draft-edit-row">
               <input type="text" id="draft-med" placeholder="Medicine">
               <input type="text" id="draft-dose" placeholder="Dosage">
             </div>
-            <div id="draft-err" class="alert alert-red hide"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span id="draft-err-text"></span></div>
+            <div id="draft-err" class="alert alert-red hide"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span><span id="draft-err-text"></span></div>
             <div class="draft-actions">
               <button class="btn btn-green btn-sm" id="btn-approve" onclick="doApprove()">
                 <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polyline points="20 6 9 17 4 12"/></svg>
-                Send to Pharmacy
+                Approve & Send to Pharmacy
               </button>
-              <button class="btn btn-outline btn-sm" id="btn-reject" onclick="doReject()">Reject</button>
+              <button class="btn btn-outline btn-sm" id="btn-reject" onclick="confirmReject()">
+                <svg class="i i-sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Reject
+              </button>
               <span style="flex:1;"></span>
-              <button class="raw-toggle" onclick="toggleRaw()">Show full AI reasoning</button>
+              <button class="raw-toggle" onclick="toggleRaw()">
+                <svg class="i i-xs" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                Show AI reasoning
+              </button>
             </div>
           </div>
-          <div id="raw-section" class="hide" style="margin-top:8px;">
+          <div id="raw-section" class="hide" style="padding:0 16px 16px;">
             <div class="raw-text" id="r-raw"></div>
           </div>
-
           <!-- Status -->
-          <div id="status-sent" class="status-line status-sent hide" style="margin-top:12px;">
+          <div id="status-sent" class="status-line status-sent hide" style="margin:0 16px 16px;">
             <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--ok);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-            Prescription approved and sent to pharmacy.
+            Prescription approved and sent to pharmacy
           </div>
-          <div id="status-rejected" class="status-line status-rejected hide" style="margin-top:12px;">
-            Suggestion rejected. No prescription sent.
+          <div id="status-rejected" class="status-line status-rejected hide" style="margin:0 16px 16px;">
+            <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--warn);"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Suggestion rejected — no prescription sent
           </div>
         </div>
-      </div>
 
-      <!-- Compare result -->
-      <div class="card hide" id="compare-card">
-        <div class="card-header">
-          <svg class="i" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Memory Comparison
-        </div>
-        <div class="card-body">
-          <div id="compare-loading" class="card-loading hide"><div class="spinner"></div> Running both consultations…</div>
-          <div class="compare-grid" id="compare-grid" style="display:none;">
-            <div class="compare-col compare-col-off">
-              <div class="compare-label compare-label-off">Without Memory</div>
-              <div id="cmp-without"></div>
-            </div>
-            <div class="compare-col compare-col-on">
-              <div class="compare-label compare-label-on">With Hindsight Memory</div>
-              <div id="cmp-with"></div>
+        <!-- Compare result -->
+        <div class="card hide" id="compare-card" style="margin-top:14px;">
+          <div class="card-header">
+            <svg class="i" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Memory Comparison
+          </div>
+          <div class="card-body">
+            <div id="compare-loading" class="card-loading hide"><div class="spinner"></div> Running both consultations…</div>
+            <div class="compare-grid" id="compare-grid" style="display:none;">
+              <div class="compare-col compare-col-off">
+                <div class="compare-label compare-label-off">Without Memory</div>
+                <div id="cmp-without"></div>
+              </div>
+              <div class="compare-col compare-col-on">
+                <div class="compare-label compare-label-on">With Hindsight Memory</div>
+                <div id="cmp-with"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ╔══════════════════════════════════════════════════════════════╗ -->
-<!-- ║  PHARMACY PAGE                                               ║ -->
-<!-- ╚══════════════════════════════════════════════════════════════╝ -->
-<div class="container page" id="page-pharmacy">
-  <!-- Pending -->
-  <div class="card">
-    <div class="card-header">
-      <svg class="i" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-      Pending Prescriptions
-      <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:auto;">Auto-refreshes</span>
+  <!-- ═══════════════════════════════════════════════════════════
+       PATIENTS PAGE
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="page-content page" id="page-patients">
+    <div class="card">
+      <div class="card-header">
+        <svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Patients
+        <span style="margin-left:auto;font-size:11px;font-weight:400;color:var(--muted);">From prescription history</span>
+      </div>
+      <div id="patients-loading" class="card-loading"><div class="spinner"></div> Loading patient records…</div>
+      <div id="patients-empty" class="empty-state hide">
+        <div class="empty-icon"><svg class="i" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="empty-title">No patients yet</div>
+        <div class="empty-sub">Patient records will appear after the first consultation.</div>
+      </div>
+      <div style="padding:0;">
+        <table id="patients-table" class="hide">
+          <thead>
+            <tr><th>Patient ID</th><th>Last Medicine</th><th>Last Dosage</th><th class="num">Visits</th><th>Last Visit</th></tr>
+          </thead>
+          <tbody id="patients-body"></tbody>
+        </table>
+      </div>
     </div>
-    <div id="pending-loading" class="card-loading"><div class="spinner"></div> Loading prescriptions…</div>
-    <div id="pending-empty" class="empty-state hide">
-      <div class="empty-icon">
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHARMACY PAGE
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="page-content page" id="page-pharmacy">
+    <div class="card">
+      <div class="card-header">
+        <svg class="i" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+        Pending Prescriptions
+        <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:auto;">Auto-refreshes every 5s</span>
+      </div>
+      <div id="pending-loading" class="card-loading"><div class="spinner"></div> Loading prescriptions…</div>
+      <div id="pending-empty" class="empty-state hide">
+        <div class="empty-icon">
+          <svg class="i" viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+        </div>
+        <div class="empty-title">No pending prescriptions</div>
+        <div class="empty-sub">Approved prescriptions from Doctor Desk will appear here automatically.</div>
+      </div>
+      <div id="pending-cards" class="rx-card-grid hide"></div>
+    </div>
+
+    <!-- Dispense feedback -->
+    <div id="dispense-msg" class="alert hide" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       INVENTORY PAGE
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="page-content page" id="page-inventory">
+    <div class="card card-flush">
+      <div class="card-header">
         <svg class="i" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Medicine Inventory
       </div>
-      <div class="empty-title">No pending prescriptions</div>
-      <div class="empty-sub">Approved prescriptions will appear here automatically.</div>
+      <div class="inv-filters">
+        <div class="inv-search-wrap">
+          <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" class="inv-search" id="inv-search" placeholder="Search medicines…" oninput="filterInventory()">
+        </div>
+        <label class="filter-toggle">
+          <input type="checkbox" id="inv-low-only" onchange="filterInventory()">
+          Low stock only
+        </label>
+      </div>
+      <div style="padding:0;">
+        <div id="inv-loading" class="card-loading"><div class="spinner"></div> Loading inventory…</div>
+        <table id="inv-table" class="hide">
+          <thead>
+            <tr><th>Medicine</th><th class="num">In Stock</th><th class="num">Reorder At</th><th>Status</th></tr>
+          </thead>
+          <tbody id="inv-body"></tbody>
+        </table>
+      </div>
     </div>
-    <div id="pending-cards" class="rx-card-grid hide"></div>
   </div>
 
-  <!-- Dispense feedback -->
-  <div id="dispense-msg" class="alert hide" style="margin-top:14px;"></div>
+  <!-- Footer -->
+  <footer class="site-footer">
+    <span>Decision support only — a licensed doctor must review every prescription</span>
+    <span class="footer-dot"></span>
+    <span>Family Clinic Memory Assistant v0.3</span>
+  </footer>
+</main>
 
-  <!-- Inventory -->
-  <div class="card" style="margin-top:16px;">
-    <div class="card-header">
-      <svg class="i" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-      Inventory
-    </div>
-    <div class="inv-filters">
-      <div class="inv-search-wrap">
-        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" class="inv-search" id="inv-search" placeholder="Search medicines…" oninput="filterInventory()">
-      </div>
-      <label class="filter-toggle">
-        <input type="checkbox" id="inv-low-only" onchange="filterInventory()">
-        Low stock only
-      </label>
-    </div>
-    <div style="padding:0;">
-      <div id="inv-loading" class="card-loading"><div class="spinner"></div> Loading inventory…</div>
-      <table id="inv-table" class="hide">
-        <thead>
-          <tr><th>Medicine</th><th class="num">In Stock</th><th class="num">Reorder At</th><th>Status</th></tr>
-        </thead>
-        <tbody id="inv-body"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+</div><!-- /app-layout -->
 
-<!-- ── FOOTER ── -->
-<footer class="site-footer">
-  Decision support only. A licensed doctor must review every prescription.
-</footer>
+<!-- Confirmation dialog container -->
+<div id="confirm-container"></div>
 
-<!-- ══════════════════════════════════════════════════════════════ -->
-<!--  JAVASCRIPT — unchanged                                       -->
-<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════════════════════════════ -->
 <script>
 const API = '';
 let doctorToken = null;
 let pharmacistToken = null;
 let _currentRxId = null;
-let _inventoryData = [];  // cache for filtering
+let _inventoryData = [];
+let _safetyAlertCount = 0;
 
 /* ── Patient knowledge (for snapshot card) ── */
 const PATIENTS = {
@@ -915,19 +1332,52 @@ function docAuthOnly() {
   return h;
 }
 
+/* ── Sidebar toggle (mobile) ── */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('open');
+  // Add/remove overlay
+  let ov = document.querySelector('.sidebar-overlay');
+  if (sb.classList.contains('open')) {
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.className = 'sidebar-overlay';
+      ov.onclick = toggleSidebar;
+      document.body.appendChild(ov);
+    }
+  } else if (ov) {
+    ov.remove();
+  }
+}
+
 /* ── Tab switching ── */
 function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`page-${tab}`).classList.add('active');
-  document.getElementById(`tab-${tab}`).classList.add('active');
-  if (tab === 'pharmacy') { loadPending(); loadInventory(); }
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+  const page = document.getElementById(`page-${tab}`);
+  const btn = document.getElementById(`tab-${tab}`);
+  if (page) page.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  // Update topbar title
+  const titles = { doctor: 'Doctor Desk', patients: 'Patients', pharmacy: 'Pharmacy', inventory: 'Inventory' };
+  document.getElementById('topbar-title').textContent = titles[tab] || tab;
+
+  // Load data for specific tabs
+  if (tab === 'pharmacy') { loadPending(); }
+  if (tab === 'inventory') { loadInventory(); }
+  if (tab === 'patients') { loadPatients(); }
+
+  // Close sidebar on mobile
+  const sb = document.getElementById('sidebar');
+  if (sb.classList.contains('open')) toggleSidebar();
 }
 
 /* ── Utility ── */
-function show(id) { document.getElementById(id).classList.remove('hide'); }
-function hide(id) { document.getElementById(id).classList.add('hide'); }
-function setText(id, t) { document.getElementById(id).textContent = t; }
+function show(id) { document.getElementById(id)?.classList.remove('hide'); }
+function hide(id) { document.getElementById(id)?.classList.add('hide'); }
+function setText(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
 function showFormErr(msg) { setText('form-err-text', msg); show('form-err'); }
 function hideFormErr() { hide('form-err'); }
 
@@ -941,10 +1391,30 @@ function showToast(msg, type='green', duration=4000) {
 function lockConsult(on) {
   const btn = document.getElementById('btn-consult');
   btn.disabled = on;
-  btn.innerHTML = on ? '<span class="spinner spinner-white"></span> Consulting…' : 'Consult';
+  btn.innerHTML = on
+    ? '<span class="spinner spinner-white"></span> Consulting…'
+    : '<svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><path d="M22 10 A2 2 0 0 0 20 8 A2 2 0 0 0 18 10"/></svg> Consult';
   document.getElementById('btn-compare').disabled = on;
   document.getElementById('btn-demo-story').disabled = on;
 }
+
+/* ── Confirmation dialog ── */
+function showConfirm(title, text, onConfirm) {
+  const container = document.getElementById('confirm-container');
+  container.innerHTML = `
+    <div class="confirm-overlay" onclick="closeConfirm()">
+      <div class="confirm-dialog" onclick="event.stopPropagation()">
+        <div class="confirm-title">${title}</div>
+        <div class="confirm-text">${text}</div>
+        <div class="confirm-actions">
+          <button class="btn btn-outline btn-sm" onclick="closeConfirm()">Cancel</button>
+          <button class="btn btn-red btn-sm" id="confirm-action-btn">Confirm</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('confirm-action-btn').onclick = () => { closeConfirm(); onConfirm(); };
+}
+function closeConfirm() { document.getElementById('confirm-container').innerHTML = ''; }
 
 /* ── Story banner expand ── */
 function toggleStoryDetail() {
@@ -952,10 +1422,10 @@ function toggleStoryDetail() {
   const btn = el.previousElementSibling;
   if (el.style.display === 'none' || !el.style.display) {
     el.style.display = 'block';
-    btn.innerHTML = 'Why memory matters <svg class="i i-sm" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="m18 15-6-6-6 6"/></svg>';
+    btn.innerHTML = 'Why memory matters <svg class="i i-xs" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>';
   } else {
     el.style.display = 'none';
-    btn.innerHTML = 'Why memory matters <svg class="i i-sm" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="m6 9 6 6 6-6"/></svg>';
+    btn.innerHTML = 'Why memory matters <svg class="i i-xs" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
   }
 }
 
@@ -987,7 +1457,6 @@ function onPatientChange() {
   document.getElementById('snap-chips').innerHTML = chips;
   snap.classList.remove('hide');
 
-  // Visit count chip
   if (p.visits > 0) {
     visitChip.textContent = `${p.visits} past visit${p.visits !== 1 ? 's' : ''}`;
     visitChip.classList.remove('hide');
@@ -997,24 +1466,22 @@ function onPatientChange() {
   }
 }
 
-/* ── PART 1: Demo story runner ── */
+/* ── Demo story runner ── */
 async function runDemoStory() {
   hideFormErr();
   const pid = 'patient_001';
   const sym = 'cough and sore throat';
 
-  // Set form values
   document.getElementById('pid').value = pid;
   onPatientChange();
   document.getElementById('sym').value = sym;
 
-  // Prepare UI
   hide('result-empty'); hide('result-card'); hide('compare-card');
+  hide('safety-block-wrap'); hide('decision-card');
   show('demo-progress');
   lockConsult(true);
 
   try {
-    // Step 1: Without memory
     setText('demo-progress-text', 'Step 1: Consulting without memory');
     const r1 = await fetch(`${API}/doctor/visit`, {
       method:'POST', headers: docHeaders(),
@@ -1022,7 +1489,6 @@ async function runDemoStory() {
     });
     const d1 = r1.ok ? await r1.json() : null;
 
-    // Show Step 1 result in compare
     show('compare-card');
     document.getElementById('compare-grid').style.display = 'grid';
     if (d1) {
@@ -1033,11 +1499,9 @@ async function runDemoStory() {
     document.getElementById('cmp-with').innerHTML =
       '<div class="card-loading" style="padding:20px;"><div class="spinner"></div> Waiting…</div>';
 
-    // Pause 3 seconds
     setText('demo-progress-text', 'Pausing before Step 2');
     await new Promise(r => setTimeout(r, 3000));
 
-    // Step 2: With memory
     setText('demo-progress-text', 'Step 2: Consulting with Hindsight memory');
     const r2 = await fetch(`${API}/doctor/visit`, {
       method:'POST', headers: docHeaders(),
@@ -1049,7 +1513,6 @@ async function runDemoStory() {
       document.getElementById('cmp-with').innerHTML =
         '<div class="demo-caption caption-step2" style="margin-bottom:10px;">Step 2: With Hindsight memory, it recalls history</div>' +
         formatCmp(d2, true);
-      // Also fill the main result
       fillResult(d2);
     }
 
@@ -1070,8 +1533,8 @@ async function doVisit() {
   if (!sym) { showFormErr('Please describe symptoms.'); return; }
 
   hide('result-empty'); hide('result-card'); hide('compare-card');
-  hide('warning-banner'); hide('safety-findings');
-  hide('status-sent'); hide('status-rejected'); hide('draft-section');
+  hide('safety-block-wrap'); hide('decision-card');
+  hide('status-sent'); hide('status-rejected');
   hide('demo-caption');
   show('result-loading');
   lockConsult(true);
@@ -1099,35 +1562,56 @@ async function doVisit() {
 }
 
 function fillResult(d) {
-  // 1. Alert banner
+  // ═══ SAFETY BLOCK (deterministic engine — shown FIRST) ═══
   const alertText = d.alert || d.warning || '';
-  if (alertText) {
-    const isAllergy = alertText.toLowerCase().includes('allerg');
-    document.getElementById('warning-title').textContent = isAllergy ? 'Allergy Conflict' : 'Safety Alert';
-    document.getElementById('warning-text').textContent = alertText;
-    show('warning-banner');
-  } else {
-    hide('warning-banner');
-  }
-
-  // Safety findings
   const findings = d.safety_findings || [];
-  if (findings.length > 0) {
-    document.getElementById('safety-list').innerHTML = findings.map(f => {
-      const cls = f.severity === 'contraindicated' ? 'finding-contra'
-        : f.severity === 'major' ? 'finding-major'
-        : f.severity === 'moderate' ? 'finding-moderate' : 'finding-warning';
-      return `<div class="finding-item ${cls}"><strong>${f.severity.toUpperCase()}:</strong> ${f.reason}</div>`;
-    }).join('');
-    show('safety-findings');
+  const hasSafety = alertText || findings.length > 0;
+
+  if (hasSafety) {
+    // Title
+    const isAllergy = alertText.toLowerCase().includes('allerg');
+    document.getElementById('safety-title').textContent = isAllergy ? 'Allergy Conflict Detected' : 'Safety Alert';
+
+    // Warning text
+    let detailHtml = '';
+    if (alertText) {
+      detailHtml += `<div style="font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px;line-height:1.4;">${alertText}</div>`;
+    }
+    document.getElementById('warning-text-detail').innerHTML = detailHtml;
+
+    // Findings
+    if (findings.length > 0) {
+      document.getElementById('safety-findings-detail').innerHTML = findings.map(f => {
+        const cls = f.severity === 'contraindicated' ? 'finding-contra'
+          : f.severity === 'major' ? 'finding-major'
+          : f.severity === 'moderate' ? 'finding-moderate' : 'finding-warning';
+        const icon = f.severity === 'contraindicated' || f.severity === 'major'
+          ? '<svg class="i i-xs" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>'
+          : '<svg class="i i-xs" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+        return `<div class="finding-item ${cls}">${icon} <span><strong>${f.severity.toUpperCase()}:</strong> ${f.reason}</span></div>`;
+      }).join('');
+    } else {
+      document.getElementById('safety-findings-detail').innerHTML = '';
+    }
+
+    show('safety-block-wrap');
+    _safetyAlertCount++;
+    updateStats();
   } else {
-    hide('safety-findings');
+    hide('safety-block-wrap');
   }
 
-  // 2. Summary line
+  // Backward compat hidden elements
+  if (alertText) {
+    document.getElementById('warning-title').textContent = alertText.toLowerCase().includes('allerg') ? 'Allergy Conflict' : 'Safety Alert';
+    document.getElementById('warning-text').textContent = alertText;
+  }
+
+  // ═══ AI CLINICAL CARD ═══
+  // Summary line
   setText('r-diag', d.summary || d.ai_diagnosis || '—');
 
-  // 3. Prescription table
+  // Prescription table
   const rxList = d.rx || [];
   if (rxList.length > 0) {
     let tbl = '<table class="rx-table"><thead><tr><th>Drug</th><th>Dose</th><th>Freq</th><th>Duration</th></tr></thead><tbody>';
@@ -1137,13 +1621,12 @@ function fillResult(d) {
     tbl += '</tbody></table>';
     document.getElementById('rx-table-wrap').innerHTML = tbl;
   } else {
-    // Fallback to old format
     document.getElementById('rx-table-wrap').innerHTML =
       `<table class="rx-table"><thead><tr><th>Drug</th><th>Dose</th></tr></thead><tbody>` +
       `<tr><td>${d.prescription?.medicine_name||'—'}</td><td>${d.prescription?.dosage||'—'}</td></tr></tbody></table>`;
   }
 
-  // 4. Memory chips (max 4 from memory_facts, fallback to old memory_used)
+  // Memory chips
   const chips = document.getElementById('memory-chips');
   const emptyNote = document.getElementById('memory-empty-note');
   emptyNote.classList.add('hide');
@@ -1167,7 +1650,7 @@ function fillResult(d) {
     chips.innerHTML = '<span class="chip chip-muted">No relevant memories</span>';
   }
 
-  // 5. Advice + follow-up
+  // Advice + follow-up
   const adviceList = d.advice || [];
   if (adviceList.length > 0) {
     document.getElementById('r-advice').innerHTML = adviceList.slice(0, 3).map(a => `<li>${a}</li>`).join('');
@@ -1188,32 +1671,34 @@ function fillResult(d) {
   document.getElementById('trace-recall').innerHTML = recallOk ? '<span class="trace-ok">✓</span> recall()' : 'recall()';
   document.getElementById('trace-reason').innerHTML = '<span class="trace-ok">✓</span> reason';
   document.getElementById('trace-retain').innerHTML = recallOk ? '<span class="trace-ok">✓</span> retain()' : 'retain()';
-  document.getElementById('trace-saved').style.display = recallOk ? 'inline' : 'none';
+  document.getElementById('trace-saved').style.display = recallOk ? 'inline-flex' : 'none';
 
-  // Raw reasoning (collapsed)
+  // Raw reasoning
   const rawText = d.raw_reasoning || d.ai_reasoning || '';
   document.getElementById('r-raw').textContent = rawText;
   hide('raw-section');
 
-  // Draft edit
+  show('result-card');
+
+  // ═══ DOCTOR DECISION CARD ═══
   document.getElementById('draft-med').value = d.prescription?.medicine_name || '';
   document.getElementById('draft-dose').value = d.prescription?.dosage || '';
   _currentRxId = d.prescription?.prescription_id;
-  show('draft-section');
+  show('decision-card');
+  // Make sure draft section is visible, status hidden
+  document.getElementById('draft-section').style.display = '';
   hide('status-sent'); hide('status-rejected');
-
-  show('result-card');
 }
 
 function toggleRaw() {
   const el = document.getElementById('raw-section');
-  const btn = el.previousElementSibling.querySelector('.raw-toggle');
+  const btn = document.querySelector('.raw-toggle');
   if (el.classList.contains('hide')) {
     el.classList.remove('hide');
-    btn.textContent = 'Hide full AI reasoning';
+    btn.innerHTML = '<svg class="i i-xs" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg> Hide AI reasoning';
   } else {
     el.classList.add('hide');
-    btn.textContent = 'Show full AI reasoning';
+    btn.innerHTML = '<svg class="i i-xs" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg> Show AI reasoning';
   }
 }
 
@@ -1239,23 +1724,34 @@ async function doApprove() {
       const d = await res.json().catch(() => ({}));
       setText('draft-err-text', d.detail || `Error ${res.status}`);
       show('draft-err');
-      btn.disabled = false; btn.textContent = '✅ Send to Pharmacy';
+      btn.disabled = false;
+      btn.innerHTML = '<svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polyline points="20 6 9 17 4 12"/></svg> Approve & Send to Pharmacy';
       document.getElementById('btn-reject').disabled = false;
       return;
     }
     _currentRxId = null;
-    hide('draft-section');
+    document.getElementById('draft-section').style.display = 'none';
     show('status-sent');
-    showToast('✅ Prescription sent to pharmacy', 'green');
+    showToast('Prescription approved and sent to pharmacy', 'green');
+    updateStats();
   } catch(e) {
     setText('draft-err-text', e.message);
     show('draft-err');
-    btn.disabled = false; btn.textContent = '✅ Send to Pharmacy';
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polyline points="20 6 9 17 4 12"/></svg> Approve & Send to Pharmacy';
     document.getElementById('btn-reject').disabled = false;
   }
 }
 
-/* ── Doctor: Reject ── */
+/* ── Doctor: Reject (with confirmation) ── */
+function confirmReject() {
+  showConfirm(
+    'Reject this suggestion?',
+    'The AI-suggested prescription will be discarded. No prescription will be sent to the pharmacy. You can always run a new consultation.',
+    doReject
+  );
+}
+
 async function doReject() {
   if (!_currentRxId) return;
   document.getElementById('btn-approve').disabled = true;
@@ -1267,7 +1763,7 @@ async function doReject() {
       body: JSON.stringify({ prescription_id: _currentRxId }),
     });
     _currentRxId = null;
-    hide('draft-section');
+    document.getElementById('draft-section').style.display = 'none';
     show('status-rejected');
     showToast('Prescription rejected', 'amber');
   } catch(e) {
@@ -1284,14 +1780,13 @@ async function doCompare() {
   if (!pid) { showFormErr('Please select a patient.'); return; }
   if (!sym) { showFormErr('Please describe symptoms.'); return; }
 
-  hide('result-empty'); hide('result-card');
+  hide('result-empty'); hide('result-card'); hide('safety-block-wrap'); hide('decision-card');
   show('compare-card');
   document.getElementById('compare-grid').style.display = 'none';
   show('compare-loading');
   lockConsult(true);
 
   try {
-    // Sequential: without first, then with — so the demo reads naturally
     const rOff = await fetch(`${API}/doctor/visit`, {
       method:'POST', headers:docHeaders(),
       body:JSON.stringify({patient_id:pid, symptoms:sym, use_memory:false})
@@ -1303,9 +1798,7 @@ async function doCompare() {
     if (!rOff.ok || !rOn.ok) { showFormErr('Server error during comparison'); hide('compare-card'); return; }
     const [dOff, dOn] = await Promise.all([rOff.json(), rOn.json()]);
 
-    // Detect diff
     const medDiff = dOff.prescription?.medicine_name !== dOn.prescription?.medicine_name;
-    const warnDiff = !dOff.warning && !!dOn.warning;
 
     document.getElementById('cmp-without').innerHTML = formatCmp(dOff, false, medDiff);
     document.getElementById('cmp-with').innerHTML = formatCmp(dOn, true, medDiff);
@@ -1318,14 +1811,12 @@ async function doCompare() {
 }
 
 function formatCmp(d, hasMem, highlightMed) {
-  // Compare view: ONLY alert + summary + prescription + memory chips. No advice or raw text.
   const alertHtml = (d.alert || d.warning)
     ? `<div class="alert alert-red" style="margin-bottom:8px;font-size:12px;padding:6px 10px;"><svg class="i i-sm" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg> ${d.alert||d.warning}</div>`
     : '';
 
   const summary = d.summary || d.ai_diagnosis || '—';
 
-  // Prescription compact
   const rxList = d.rx || [];
   let rxHtml;
   if (rxList.length > 0) {
@@ -1339,7 +1830,6 @@ function formatCmp(d, hasMem, highlightMed) {
     rxHtml = `<div style="font-size:13px;font-weight:600;color:var(--primary);">${name}</div><div style="font-size:12px;color:var(--muted);">${d.prescription?.dosage||'—'}</div>`;
   }
 
-  // Memory chips (compact, max 3)
   const memFacts = d.memory_facts || [];
   let memHtml;
   if (hasMem && memFacts.length > 0) {
@@ -1364,7 +1854,7 @@ async function loadRisk() {
   const pid = document.getElementById('pid').value;
   if (!pid) { showFormErr('Select a patient first.'); return; }
   const btn = document.getElementById('btn-risk');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Synthesizing…';
   hide('risk-err'); hide('risk-result');
   show('risk-loading');
 
@@ -1392,7 +1882,6 @@ async function loadRisk() {
       s.trends.forEach(t => { html += `<li>${t}</li>`; });
       html += '</ul>';
     }
-    // Show details toggle for full text
     const fullText = s.full_text || data.summary || '';
     if (fullText) {
       html += '<button class="raw-toggle" style="margin-top:8px;" onclick="this.nextElementSibling.classList.toggle(\'hide\');this.textContent=this.textContent===\'Show details\'?\'Hide details\':\'Show details\'">Show details</button>';
@@ -1406,13 +1895,53 @@ async function loadRisk() {
     show('risk-err');
   } finally {
     hide('risk-loading');
-    btn.disabled = false; btn.textContent = 'Generate';
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="i i-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Generate risk profile';
   }
 }
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  PHARMACY                                                      */
-/* ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   PATIENTS
+   ══════════════════════════════════════════════════════════════ */
+async function loadPatients() {
+  try {
+    const res = await fetch(`${API}/patients`, { headers: docAuthOnly() });
+    if (!res.ok) return;
+    const data = await res.json();
+    const patients = data.patients || [];
+
+    hide('patients-loading');
+
+    if (patients.length === 0) {
+      show('patients-empty');
+      return;
+    }
+
+    const tbody = document.getElementById('patients-body');
+    tbody.innerHTML = patients.map(p => {
+      const visitDate = p.last_visit ? new Date(p.last_visit).toLocaleDateString() : '—';
+      return `<tr>
+        <td><strong>${p.patient_id}</strong></td>
+        <td>${p.last_medicine || '—'}</td>
+        <td>${p.last_dosage || '—'}</td>
+        <td class="num">${p.visit_count || 0}</td>
+        <td class="text-muted">${visitDate}</td>
+      </tr>`;
+    }).join('');
+    show('patients-table');
+
+    // Update nav badge
+    const badge = document.getElementById('nav-patient-count');
+    badge.textContent = patients.length;
+    badge.style.display = 'flex';
+  } catch(e) {
+    console.warn('loadPatients error:', e);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PHARMACY
+   ══════════════════════════════════════════════════════════════ */
 
 let pendingTimer = null;
 
@@ -1425,34 +1954,48 @@ async function loadPending() {
 
     hide('pending-loading');
 
+    // Update nav badge
+    const badge = document.getElementById('nav-pending-count');
+    if (list.length > 0) {
+      badge.textContent = list.length;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
     if (list.length === 0) {
       show('pending-empty');
       hide('pending-cards');
     } else {
       hide('pending-empty');
       const container = document.getElementById('pending-cards');
-      container.innerHTML = list.map(p => `
+      container.innerHTML = list.map(p => {
+        const patientName = PATIENTS[p.patient_id]?.name || p.patient_id;
+        return `
         <div class="rx-card">
-          <div class="rx-card-patient">👤 ${p.patient_id}</div>
+          <div class="rx-card-patient">
+            <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--muted);"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ${patientName}
+          </div>
           <div class="rx-card-drug">${p.medicine_name}</div>
           <div class="rx-card-dose">${p.dosage || '—'}</div>
-          <div class="rx-card-time">Rx: ${p.prescription_id}</div>
+          <div class="rx-card-time" style="font-family:monospace;">${p.prescription_id}</div>
           <div class="rx-card-footer">
-            <span class="status-pill pill-pending">Pending</span>
+            <span class="status-pill pill-pending">Awaiting</span>
             <span style="flex:1;"></span>
             <button class="btn btn-green btn-sm" id="disp-${p.prescription_id}" onclick="doDispense('${p.prescription_id}', this)">
+              <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polyline points="20 6 9 17 4 12"/></svg>
               Dispense
             </button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
       show('pending-cards');
     }
   } catch(e) {
     console.warn('loadPending error:', e);
   }
 
-  // Auto-refresh
   if (pendingTimer) clearTimeout(pendingTimer);
   if (document.getElementById('page-pharmacy').classList.contains('active')) {
     pendingTimer = setTimeout(loadPending, 5000);
@@ -1481,7 +2024,7 @@ async function doDispense(rxId, btnEl) {
       const reason = data.substitution.reason || '';
       showDispenseMsg('amber', `Out of stock: ${data.original_medicine}. Substituted: <strong>${alt}</strong>. <span style="color:var(--muted);font-weight:400;">${reason}</span>`);
     } else {
-      showDispenseMsg('green', `Dispensed <strong>${data.dispensed_medicine}</strong> for ${data.patient_id}.`);
+      showDispenseMsg('green', `Dispensed <strong>${data.dispensed_medicine}</strong> for ${PATIENTS[data.patient_id]?.name || data.patient_id}. Inventory updated.`);
       if (data.stock_warning) {
         showToast(`Restock alert: ${data.dispensed_medicine}`, 'amber', 5000);
       }
@@ -1497,9 +2040,13 @@ async function doDispense(rxId, btnEl) {
 
 function showDispenseMsg(type, msg) {
   const el = document.getElementById('dispense-msg');
-  const icon = type==='green' ? '✅' : type==='amber' ? '⚠️' : '❌';
+  const icons = {
+    green: '<svg class="i i-sm" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
+    amber: '<svg class="i i-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    red: '<svg class="i i-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>'
+  };
   el.className = `alert alert-${type}`;
-  el.innerHTML = `<span class="alert-icon">${icon}</span><div>${msg}</div>`;
+  el.innerHTML = `<span class="alert-icon">${icons[type]||''}</span><div>${msg}</div>`;
   show('dispense-msg');
   setTimeout(() => hide('dispense-msg'), 8000);
 }
@@ -1514,6 +2061,16 @@ async function loadInventory() {
     _inventoryData = data.inventory || [];
     hide('inv-loading');
     renderInventory(_inventoryData);
+
+    // Update low-stock counts
+    const lowCount = _inventoryData.filter(m => m.quantity <= m.reorder_threshold).length;
+    const badge = document.getElementById('nav-low-stock');
+    if (lowCount > 0) {
+      badge.textContent = lowCount;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
   } catch(e) {
     console.warn('loadInventory error:', e);
   }
@@ -1531,13 +2088,13 @@ function renderInventory(inv) {
     const low = m.quantity <= m.reorder_threshold;
     let statusHtml, rowBg;
     if (out) {
-      statusHtml = '<span style="display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--red-lt);color:var(--red);">Out of Stock</span>';
+      statusHtml = '<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--red-lt);color:var(--red);text-transform:uppercase;letter-spacing:.04em;">Out of Stock</span>';
       rowBg = 'background:var(--red-lt);';
     } else if (low) {
-      statusHtml = '<span style="display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--amber-lt);color:var(--amber);">Low Stock</span>';
+      statusHtml = '<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--amber-lt);color:var(--amber);text-transform:uppercase;letter-spacing:.04em;">Low Stock</span>';
       rowBg = '';
     } else {
-      statusHtml = '<span style="display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;background:var(--green-lt);color:var(--green);">In Stock</span>';
+      statusHtml = '<span style="display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--green-lt);color:var(--green);text-transform:uppercase;letter-spacing:.04em;">In Stock</span>';
       rowBg = '';
     }
     return `<tr style="${rowBg}"><td>${m.medicine_name}</td><td class="num">${m.quantity}</td><td class="num">${m.reorder_threshold}</td><td>${statusHtml}</td></tr>`;
@@ -1554,11 +2111,77 @@ function filterInventory() {
   renderInventory(filtered);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   OVERVIEW STATS
+   ══════════════════════════════════════════════════════════════ */
+async function updateStats() {
+  try {
+    // Pending count
+    const pRes = await fetch(`${API}/pharmacy/pending`, { headers: phHeaders() });
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      const pending = (pData.pending || []).length;
+      document.getElementById('stat-pending').textContent = pending;
+    }
+
+    // Inventory
+    const iRes = await fetch(`${API}/inventory`, { headers: phHeaders() });
+    if (iRes.ok) {
+      const iData = await iRes.json();
+      const inv = iData.inventory || [];
+      const lowCount = inv.filter(m => m.quantity <= m.reorder_threshold).length;
+      document.getElementById('stat-low-stock').textContent = lowCount;
+    }
+
+    // Consultations today (from patients endpoint)
+    const ptRes = await fetch(`${API}/patients`, { headers: docAuthOnly() });
+    if (ptRes.ok) {
+      const ptData = await ptRes.json();
+      const patients = ptData.patients || [];
+      // Count total visits
+      const totalVisits = patients.reduce((sum, p) => sum + (p.visit_count || 0), 0);
+      document.getElementById('stat-consults').textContent = totalVisits;
+    }
+
+    document.getElementById('stat-alerts').textContent = _safetyAlertCount;
+  } catch(e) {
+    console.warn('updateStats error:', e);
+  }
+}
+
+/* ── Health check → update status indicators ── */
+async function checkHealth() {
+  try {
+    const res = await fetch(`${API}/health`);
+    if (res.ok) {
+      const data = await res.json();
+      const hi = data.integrations || {};
+
+      const hDot = document.querySelector('#status-hindsight .status-dot');
+      hDot.className = `status-dot ${hi.hindsight ? 'dot-green dot-pulse' : 'dot-red'}`;
+      document.querySelector('#status-hindsight').lastChild.textContent = hi.hindsight ? ' Hindsight connected' : ' Hindsight offline';
+
+      const aDot = document.querySelector('#status-ai .status-dot');
+      aDot.className = `status-dot ${hi.groq ? 'dot-green dot-pulse' : 'dot-red'}`;
+      document.querySelector('#status-ai').lastChild.textContent = hi.groq ? ' AI online' : ' AI offline';
+
+      if (data.demo_mode) {
+        document.getElementById('status-demo').style.display = 'flex';
+        document.getElementById('demo-tag').style.display = 'inline-flex';
+      }
+    }
+  } catch(e) {
+    console.warn('Health check failed:', e);
+  }
+}
+
 /* ── Boot ── */
 (async function boot() {
   await autoLogin();
+  checkHealth();
   loadPending();
   loadInventory();
+  updateStats();
 })();
 </script>
 </body>
