@@ -1,4 +1,10 @@
+# Experimental Next.js Frontend Prototype
+> **Note for Evaluators:** The active, fully-featured user interface for Family Clinic Memory Assistant is the zero-dependency single-page web app served directly by FastAPI at **[http://localhost:8000/](http://localhost:8000/)** (located in [`static/index.html`](../static/index.html)).
+>
+> This directory (`frontend/`) contains an experimental Next.js 15 + Tailwind frontend prototype.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
 
 ## Getting Started
 

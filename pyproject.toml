@@ -1,10 +1,10 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "family-clinic-memory-assistant"
-version = "0.2.0"
+version = "0.3.0"
 description = "Family Clinic Memory Assistant — FastAPI + Hindsight + Groq"
 requires-python = ">=3.11"
 dependencies = [
@@ -16,6 +16,10 @@ dependencies = [
     "httpx",
     "aiosqlite",
     "pydantic-settings>=2.0",
+    "passlib[bcrypt]",
+    "bcrypt>=4.0,<5",
+    "python-jose[cryptography]",
+    "slowapi",
 ]
 
 [project.optional-dependencies]
@@ -49,5 +53,5 @@ warn_unused_ignores = true
 
 # ── pytest ───────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-asyncio_mode = "auto"
+testpaths = ["test_core.py", "tests"]
+
