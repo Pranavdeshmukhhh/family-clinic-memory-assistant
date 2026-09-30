@@ -303,8 +303,11 @@ async def doctor_approve(
             f"Sent to pharmacy on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
             "doctor_approved",
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning(
+            "⚠️ RETAIN failed on approve │ patient=%s │ rx=%s │ %s",
+            patient_id, req.prescription_id, exc,
+        )
 
     return {
         "prescription_id": req.prescription_id,
@@ -366,8 +369,11 @@ async def doctor_reject(
             f"Rejected on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.",
             "doctor_rejected",
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning(
+            "⚠️ RETAIN failed on reject │ patient=%s │ rx=%s │ %s",
+            patient_id, req.prescription_id, exc,
+        )
 
     return {
         "prescription_id": req.prescription_id,
