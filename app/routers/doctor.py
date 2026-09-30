@@ -92,19 +92,19 @@ async def doctor_visit(
     )
 
     system_prompt = (
-        "You are a clinical decision-support assistant for a family clinic. "
-        "The safety rule engine has already run its checks — you may ONLY explain "
-        "its findings; you cannot add or remove safety findings.\n\n"
-        "Given a patient's symptoms, history, and safety findings, provide:\n"
-        "1. A suggested diagnosis\n"
-        "2. A single primary prescription (medicine name, dosage, instructions). "
-        "Do NOT prescribe a drug listed as a direct allergy.\n"
-        "3. Brief clinical reasoning\n"
-        "4. A 'warning' field: plain-English explanation of safety findings "
-        "(paraphrase from SAFETY FINDINGS). If none, set to null.\n\n"
-        "Respond in JSON format:\n"
-        '{"diagnosis": "...", "medicine_name": "...", "dosage": "...", '
-        '"instructions": "...", "reasoning": "...", "warning": "..." or null}'
+        "You are a terse clinical decision-support system. "
+        "Return ONLY valid JSON, no markdown, no preamble, no extra fields. "
+        "Use standard abbreviations (BD, OD, TDS, PRN).\n"
+        "Schema (obey word limits strictly):\n"
+        '{\n'
+        '  "alert": "one sentence, ONLY allergy/interaction/safety conflicts, max 20 words. Empty string if none",\n'
+        '  "summary": "one sentence: likely diagnosis and why, max 25 words",\n'
+        '  "prescription": [{"drug": "", "dose": "", "frequency": "", "duration": ""}],\n'
+        '  "memory_used": ["max 4 short facts from history, max 8 words each, e.g. Penicillin allergy (2022)"],\n'
+        '  "advice": ["max 3 bullets, max 10 words each"],\n'
+        '  "follow_up": "max 12 words"\n'
+        '}\n'
+        "Do NOT prescribe a drug the patient is allergic to."
     )
     user_prompt = (
         f"{history_block}{allergy_block}\n\n"
@@ -118,16 +118,27 @@ async def doctor_visit(
         ai_result = parse_llm_json(raw_response)
     except Exception:
         ai_result = {
-            "diagnosis": raw_response,
-            "medicine_name": "Unknown",
-            "dosage": "See notes",
-            "instructions": "",
-            "reasoning": raw_response,
-            "warning": None,
+            "summary": raw_response[:300],
+            "prescription": [{"drug": "Unknown", "dose": "See notes", "frequency": "", "duration": ""}],
+            "alert": "",
+            "memory_used": [],
+            "advice": [],
+            "follow_up": "",
         }
 
-    medicine_name = ai_result.get("medicine_name", "Unknown")
-    dosage        = ai_result.get("dosage", "As directed")
+    # -- Normalise prescription from new structured format --------------------
+    rx_list = ai_result.get("prescription", [])
+    if isinstance(rx_list, list) and len(rx_list) > 0:
+        first_rx = rx_list[0]
+        medicine_name = first_rx.get("drug", "Unknown")
+        dosage = " ".join(filter(None, [
+            first_rx.get("dose", ""),
+            first_rx.get("frequency", ""),
+            first_rx.get("duration", ""),
+        ])) or "As directed"
+    else:
+        medicine_name = ai_result.get("medicine_name", "Unknown")
+        dosage = ai_result.get("dosage", "As directed")
 
     # -- Step 3: Full safety check now that we have a proposed medicine --------
     safety_findings: list[Finding] = check_prescription(
@@ -136,13 +147,16 @@ async def doctor_visit(
         proposed_items=[medicine_name],
     )
 
-    # Authoritative warning = rule engine findings (LLM warning is secondary)
+    # Authoritative alert = rule engine findings override LLM alert
     if safety_findings:
-        rule_warning: str | None = findings_summary(safety_findings)
-    elif ai_result.get("warning"):
-        rule_warning = str(ai_result["warning"])
+        rule_alert: str = findings_summary(safety_findings)
+    elif ai_result.get("alert"):
+        rule_alert = str(ai_result["alert"])
     else:
-        rule_warning = None
+        rule_alert = ""
+
+    # Also keep backward compat key "warning"
+    rule_warning = rule_alert or None
 
     # -- Step 4: Save as DRAFT ------------------------------------------------
     rx_id = f"rx_{uuid.uuid4().hex[:8]}"
@@ -160,13 +174,14 @@ async def doctor_visit(
         )
         conn.commit()
 
-    # ── Step 4: Retain visit notes to Hindsight ──────────────────────────────
+    # ── Step 4b: Retain visit notes to Hindsight ─────────────────────────────
     if req.use_memory:
+        summary_text = ai_result.get("summary", ai_result.get("diagnosis", "N/A"))
         visit_content = (
             f"Visit on {datetime.datetime.now().strftime('%Y-%m-%d')}. "
             f"Symptoms: {symptoms}. "
             f"{'Doctor notes: ' + notes + '. ' if notes else ''}"
-            f"AI suggested diagnosis: {ai_result.get('diagnosis', 'N/A')}. "
+            f"AI suggested diagnosis: {summary_text}. "
             f"Awaiting doctor approval before prescription is finalised."
         )
         await retain_patient(patient_id, visit_content, "doctor_visit")
@@ -195,7 +210,16 @@ async def doctor_visit(
             "notes": ai_result.get("instructions", ""),
             "status": "draft",
         },
-        "ai_diagnosis": ai_result.get("diagnosis", ""),
+        # ── New structured fields ──
+        "alert": rule_alert,
+        "summary": ai_result.get("summary", ai_result.get("diagnosis", "")),
+        "rx": rx_list if isinstance(rx_list, list) else [],
+        "memory_facts": ai_result.get("memory_used", []),
+        "advice": ai_result.get("advice", []),
+        "follow_up": ai_result.get("follow_up", ""),
+        "raw_reasoning": ai_result.get("reasoning", raw_response[:400]),
+        # ── Backward compat fields ──
+        "ai_diagnosis": ai_result.get("summary", ai_result.get("diagnosis", "")),
         "ai_reasoning": ai_result.get("reasoning", ""),
         "warning": rule_warning,
         "safety_findings": [f.to_dict() for f in safety_findings],

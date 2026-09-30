@@ -117,24 +117,25 @@ async def pharmacy_dispense(
         # ── Phase 2b: Out of stock — LLM substitution ─────────────────────────
         in_stock = get_in_stock_medicines()
         alt_prompt = (
-            f"The prescribed medicine '{medicine_name}' is out of stock. "
-            f"In-stock medicines: {', '.join(in_stock)}. "
-            f"Suggest the best alternative from the in-stock list in the same "
-            f"drug class or for the same condition. "
-            f'Respond in JSON: {{"alternative": "...", "reason": "..."}}'
+            f"'{medicine_name}' is out of stock. "
+            f"In-stock: {', '.join(in_stock)}. "
+            "Pick the best safe alternative. "
+            'Return ONLY JSON: {"substitute": "exact name", "reason": "max 12 words"}'
         )
         alt_response = groq_chat(
-            "You are a pharmacist AI. Suggest a safe drug substitution from available stock.",
+            "You are a pharmacist AI. Return ONLY valid JSON, no markdown.",
             alt_prompt,
         )
 
         try:
             alt_result = parse_llm_json(alt_response)
+            if "alternative" in alt_result and "substitute" not in alt_result:
+                alt_result["substitute"] = alt_result.pop("alternative")
         except Exception:
-            alt_result = {"alternative": "No suitable alternative found", "reason": alt_response}
+            alt_result = {"substitute": "No suitable alternative found", "reason": alt_response[:100]}
 
         substitution     = alt_result
-        alternative_name = alt_result.get("alternative", "")
+        alternative_name = alt_result.get("substitute", alt_result.get("alternative", ""))
 
         if alternative_name:
             with get_db() as conn:

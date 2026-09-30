@@ -250,19 +250,21 @@
     .chip-muted { background: #f1f5f9; color: var(--muted); }
 
     /* ── Result sections ── */
-    .result-section { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .result-section { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
     .result-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .result-label {
-      font-size: 12px; font-weight: 500; text-transform: uppercase;
-      letter-spacing: .04em; color: var(--muted); margin-bottom: 6px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--muted); margin-bottom: 4px;
     }
     .result-value { font-size: 14px; color: var(--text); }
-    .result-value-lg { font-size: 16px; font-weight: 600; color: var(--text); }
-    .result-value-med { font-size: 15px; font-weight: 600; color: var(--primary); }
-    .result-rx-card {
-      background: var(--primary-soft); border: 1px solid var(--primary-mid);
-      border-radius: 8px; padding: 12px 16px;
-    }
+    .result-value-lg { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .result-value-med { font-size: 14px; font-weight: 600; color: var(--primary); }
+
+    /* Rx table */
+    .rx-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+    .rx-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); background: var(--primary-soft); }
+    .rx-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .rx-table td:first-child { font-weight: 600; color: var(--primary); }
 
     /* ── Draft edit ── */
     .draft-edit-row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -278,19 +280,19 @@
     .status-rejected { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn-bd); }
 
     /* ── Compare grid ── */
-    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
-    .compare-col { border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
+    .compare-col { border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
     .compare-col-on { background: var(--primary-soft); border-color: var(--primary-mid); }
     .compare-col-off { background: var(--bg); }
     .compare-label {
-      font-size: 12px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .04em; margin-bottom: 10px; padding-bottom: 8px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; margin-bottom: 8px; padding-bottom: 6px;
       border-bottom: 1px solid var(--border);
     }
     .compare-label-on { color: var(--primary); }
     .compare-label-off { color: var(--muted); }
-    .demo-caption { font-size: 13px; font-weight: 600; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
+    .demo-caption { font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; text-align: center; }
     .caption-step1 { background: var(--bg); color: var(--muted); border: 1px dashed var(--border); }
     .caption-step2 { background: var(--primary-soft); color: var(--primary); border: 1px dashed var(--primary-mid); }
 
@@ -334,17 +336,17 @@
     /* ── Memory trace ── */
     .memory-trace {
       display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-      font-size: 12px; color: var(--muted); padding: 8px 12px;
+      font-size: 11px; color: var(--muted); padding: 6px 10px;
       background: var(--bg); border-radius: 6px; margin-top: 6px;
       font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
     }
     .trace-step { display: inline-flex; align-items: center; gap: 3px; }
     .trace-ok { color: var(--ok); }
     .trace-arrow { color: #cbd5e1; }
-    .trace-saved { color: var(--primary); font-weight: 600; font-size: 11px; font-family: 'Inter', system-ui, sans-serif; }
+    .trace-saved { color: var(--primary); font-weight: 600; font-size: 10px; font-family: 'Inter', system-ui, sans-serif; }
 
     /* ── Safety findings ── */
-    .finding-item { padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 6px; }
+    .finding-item { padding: 6px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 4px; }
     .finding-contra { background: var(--danger-soft); border-left: 3px solid var(--danger); color: var(--danger); }
     .finding-major { background: #fff7ed; border-left: 3px solid #ea580c; color: #c2410c; }
     .finding-moderate { background: var(--warn-soft); border-left: 3px solid var(--warn); color: var(--warn); }
@@ -367,12 +369,35 @@
       gap: 10px; padding: 30px; color: var(--muted); font-size: 13px;
     }
 
+    /* ── Skeleton loading ── */
+    .skeleton { border-radius: 6px; background: linear-gradient(90deg, #e5e9ef 25%, #f0f3f6 50%, #e5e9ef 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skel-line { height: 14px; margin-bottom: 8px; }
+    .skel-line-sm { height: 10px; width: 60%; margin-bottom: 6px; }
+    .skel-block { height: 44px; margin-bottom: 10px; }
+    .skel-chip { display: inline-block; height: 22px; width: 100px; border-radius: 100px; margin-right: 6px; }
+
     /* ── Risk profile ── */
-    .risk-text {
-      font-size: 14px; line-height: 1.6; white-space: pre-wrap;
-      color: var(--text); background: var(--bg); border-radius: 8px;
-      padding: 14px; border: 1px solid var(--border);
+    .risk-headline { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.4; }
+    .risk-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text); line-height: 1.6; }
+    .risk-list li { margin-bottom: 2px; }
+    .raw-toggle {
+      font-size: 12px; color: var(--muted); cursor: pointer;
+      border: none; background: none; font-family: inherit;
+      padding: 4px 0; transition: color 120ms;
     }
+    .raw-toggle:hover { color: var(--text); }
+    .raw-text {
+      font-size: 12px; line-height: 1.5; white-space: pre-wrap;
+      color: var(--muted); background: var(--bg); border-radius: 6px;
+      padding: 10px 12px; border: 1px solid var(--border); margin-top: 6px;
+      max-height: 200px; overflow-y: auto;
+    }
+
+    /* ── Advice bullets ── */
+    .advice-list { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text); line-height: 1.5; }
+    .advice-list li { margin-bottom: 2px; }
+    .follow-up-line { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
 
     /* ── Pharmacy cards ── */
     .rx-card-grid {
@@ -625,9 +650,16 @@
         </div>
       </div>
 
-      <!-- Loading -->
+      <!-- Skeleton loading -->
       <div class="card hide" id="result-loading">
-        <div class="card-loading"><div class="spinner"></div> Consulting AI with patient history…</div>
+        <div class="card-header" style="color:var(--muted);"><div class="spinner" style="width:14px;height:14px;"></div> Consulting AI…</div>
+        <div class="card-body">
+          <div class="skeleton skel-line" style="width:70%;"></div>
+          <div class="skeleton skel-block"></div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;"><div class="skeleton skel-chip"></div><div class="skeleton skel-chip" style="width:80px;"></div><div class="skeleton skel-chip" style="width:120px;"></div></div>
+          <div class="skeleton skel-line" style="width:50%;"></div>
+          <div class="skeleton skel-line-sm"></div>
+        </div>
       </div>
 
       <!-- Demo caption -->
@@ -639,8 +671,8 @@
           <svg class="i" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
           Consultation Result
         </div>
-        <div class="card-body">
-          <!-- Warning banner -->
+        <div class="card-body" style="padding:14px 18px;">
+          <!-- 1. Alert banner (only if alert non-empty) -->
           <div id="warning-banner" class="warning-banner hide">
             <div class="warning-icon">
               <svg class="i" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -652,24 +684,38 @@
           </div>
 
           <!-- Safety findings -->
-          <div id="safety-findings" class="hide" style="margin-bottom:16px;">
-            <div class="result-label">
-              <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--warn);"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              Safety findings
-            </div>
+          <div id="safety-findings" class="hide" style="margin-bottom:10px;">
             <div id="safety-list"></div>
           </div>
 
-          <!-- Recalled from memory -->
+          <!-- 2. Summary -->
+          <div class="result-section">
+            <div class="result-value-lg" id="r-diag"></div>
+          </div>
+
+          <!-- 3. Prescription table -->
+          <div class="result-section">
+            <div class="result-label">Prescription</div>
+            <div id="rx-table-wrap"></div>
+          </div>
+
+          <!-- 4. Memory chips (max 4) -->
           <div class="result-section">
             <div class="result-label">
               <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--primary);"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
               Memory used
             </div>
             <div class="chip-list" id="memory-chips"></div>
-            <div id="memory-empty-note" class="hide" style="font-size:13px;color:var(--muted);font-style:italic;">
-              No history yet — this is a new patient, so the answer is generic.
+            <div id="memory-empty-note" class="hide" style="font-size:12px;color:var(--muted);font-style:italic;">No history — new patient.</div>
+          </div>
+
+          <!-- 5. Advice + follow-up -->
+          <div class="result-section">
+            <div id="advice-wrap" class="hide">
+              <div class="result-label">Advice</div>
+              <ul class="advice-list" id="r-advice"></ul>
             </div>
+            <div id="r-followup" class="follow-up-line hide"></div>
           </div>
 
           <!-- Memory trace -->
@@ -679,39 +725,17 @@
             <span class="trace-step" id="trace-reason">reason</span>
             <span class="trace-arrow">&rarr;</span>
             <span class="trace-step" id="trace-retain">retain()</span>
-            <span class="trace-saved" id="trace-saved" style="margin-left:8px;">
+            <span class="trace-saved" id="trace-saved" style="margin-left:6px;">
               <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--ok);vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg>
-              Saved to patient memory
+              Saved
             </span>
           </div>
 
-          <!-- Diagnosis -->
-          <div class="result-section" style="margin-top:16px;">
-            <div class="result-label">Suggested diagnosis</div>
-            <div class="result-value-lg" id="r-diag"></div>
-          </div>
-
-          <!-- Prescription -->
-          <div class="result-section">
-            <div class="result-label">Suggested prescription</div>
-            <div class="result-rx-card">
-              <div class="result-value-med" id="r-med"></div>
-              <div class="result-value" id="r-dose" style="margin-top:4px;"></div>
-              <div class="result-value" id="r-inst" style="font-size:13px;color:var(--muted);margin-top:4px;"></div>
-            </div>
-          </div>
-
-          <!-- AI reasoning -->
-          <div class="result-section">
-            <div class="result-label">Clinical reasoning</div>
-            <div class="result-value" id="r-reason" style="font-size:13px;"></div>
-          </div>
-
-          <!-- Draft edit & approve/reject -->
-          <div id="draft-section" class="hide" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-              <div class="result-label" style="margin-bottom:0;">Edit before sending</div>
-              <span style="font-size:11px;color:var(--warn);font-weight:500;">Doctor review required</span>
+          <!-- 6. Bottom action row -->
+          <div id="draft-section" class="hide" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div class="result-label" style="margin-bottom:0;">Edit</div>
+              <span style="font-size:10px;color:var(--warn);font-weight:500;">Doctor review required</span>
             </div>
             <div class="draft-edit-row">
               <input type="text" id="draft-med" placeholder="Medicine">
@@ -719,20 +743,25 @@
             </div>
             <div id="draft-err" class="alert alert-red hide"><span class="alert-icon"><svg class="i i-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span id="draft-err-text"></span></div>
             <div class="draft-actions">
-              <button class="btn btn-green" id="btn-approve" onclick="doApprove()">
+              <button class="btn btn-green btn-sm" id="btn-approve" onclick="doApprove()">
                 <svg class="i i-sm" viewBox="0 0 24 24" style="stroke:#fff;"><polyline points="20 6 9 17 4 12"/></svg>
                 Send to Pharmacy
               </button>
-              <button class="btn btn-outline" id="btn-reject" onclick="doReject()">Reject</button>
+              <button class="btn btn-outline btn-sm" id="btn-reject" onclick="doReject()">Reject</button>
+              <span style="flex:1;"></span>
+              <button class="raw-toggle" onclick="toggleRaw()">Show full AI reasoning</button>
             </div>
+          </div>
+          <div id="raw-section" class="hide" style="margin-top:8px;">
+            <div class="raw-text" id="r-raw"></div>
           </div>
 
           <!-- Status -->
-          <div id="status-sent" class="status-line status-sent hide" style="margin-top:16px;">
+          <div id="status-sent" class="status-line status-sent hide" style="margin-top:12px;">
             <svg class="i i-sm" viewBox="0 0 24 24" style="color:var(--ok);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-            Prescription approved and sent to pharmacy queue.
+            Prescription approved and sent to pharmacy.
           </div>
-          <div id="status-rejected" class="status-line status-rejected hide" style="margin-top:16px;">
+          <div id="status-rejected" class="status-line status-rejected hide" style="margin-top:12px;">
             Suggestion rejected. No prescription sent.
           </div>
         </div>
@@ -1070,13 +1099,12 @@ async function doVisit() {
 }
 
 function fillResult(d) {
-  // Warning banner — prominent allergy warning
-  if (d.warning) {
-    const w = d.warning;
-    // Make it plain language
-    const isAllergy = w.toLowerCase().includes('allerg');
-    document.getElementById('warning-title').textContent = isAllergy ? 'Allergy Conflict' : 'Warning';
-    document.getElementById('warning-text').textContent = w;
+  // 1. Alert banner
+  const alertText = d.alert || d.warning || '';
+  if (alertText) {
+    const isAllergy = alertText.toLowerCase().includes('allerg');
+    document.getElementById('warning-title').textContent = isAllergy ? 'Allergy Conflict' : 'Safety Alert';
+    document.getElementById('warning-text').textContent = alertText;
     show('warning-banner');
   } else {
     hide('warning-banner');
@@ -1085,8 +1113,7 @@ function fillResult(d) {
   // Safety findings
   const findings = d.safety_findings || [];
   if (findings.length > 0) {
-    const list = document.getElementById('safety-list');
-    list.innerHTML = findings.map(f => {
+    document.getElementById('safety-list').innerHTML = findings.map(f => {
       const cls = f.severity === 'contraindicated' ? 'finding-contra'
         : f.severity === 'major' ? 'finding-major'
         : f.severity === 'moderate' ? 'finding-moderate' : 'finding-warning';
@@ -1097,50 +1124,76 @@ function fillResult(d) {
     hide('safety-findings');
   }
 
-  // Memory chips
+  // 2. Summary line
+  setText('r-diag', d.summary || d.ai_diagnosis || '—');
+
+  // 3. Prescription table
+  const rxList = d.rx || [];
+  if (rxList.length > 0) {
+    let tbl = '<table class="rx-table"><thead><tr><th>Drug</th><th>Dose</th><th>Freq</th><th>Duration</th></tr></thead><tbody>';
+    rxList.forEach(r => {
+      tbl += `<tr><td>${r.drug||'—'}</td><td>${r.dose||'—'}</td><td>${r.frequency||'—'}</td><td>${r.duration||'—'}</td></tr>`;
+    });
+    tbl += '</tbody></table>';
+    document.getElementById('rx-table-wrap').innerHTML = tbl;
+  } else {
+    // Fallback to old format
+    document.getElementById('rx-table-wrap').innerHTML =
+      `<table class="rx-table"><thead><tr><th>Drug</th><th>Dose</th></tr></thead><tbody>` +
+      `<tr><td>${d.prescription?.medicine_name||'—'}</td><td>${d.prescription?.dosage||'—'}</td></tr></tbody></table>`;
+  }
+
+  // 4. Memory chips (max 4 from memory_facts, fallback to old memory_used)
   const chips = document.getElementById('memory-chips');
   const emptyNote = document.getElementById('memory-empty-note');
   emptyNote.classList.add('hide');
 
-  if (d.is_new_patient) {
+  const memFacts = d.memory_facts || [];
+  if (memFacts.length > 0) {
+    chips.innerHTML = memFacts.slice(0, 4).map(f => {
+      const fl = f.toLowerCase();
+      let cls = 'chip';
+      if (fl.includes('allerg')) cls = 'chip chip-red';
+      else if (fl.includes('diabetes') || fl.includes('hypertension')) cls = 'chip chip-blue';
+      else if (fl.includes('metformin') || fl.includes('prescri')) cls = 'chip chip-green';
+      return `<span class="${cls}">${f}</span>`;
+    }).join('');
+  } else if (d.is_new_patient) {
     chips.innerHTML = '';
     emptyNote.classList.remove('hide');
-  } else if (d.memory_used && d.memory_used !== 'Memory disabled (use_memory=false)') {
-    const facts = d.memory_used.split('\n').filter(f => f.trim());
-    if (facts.length > 0) {
-      chips.innerHTML = facts.map(f => {
-        // Categorize chips
-        const fl = f.toLowerCase();
-        let cls = 'chip';
-        if (fl.includes('allerg')) cls = 'chip chip-red';
-        else if (fl.includes('diagnos') || fl.includes('diabetes') || fl.includes('hypertension')) cls = 'chip chip-blue';
-        else if (fl.includes('prescrib') || fl.includes('metformin') || fl.includes('lisinopril')) cls = 'chip chip-green';
-        const short = f.length > 120 ? f.slice(0, 117) + '…' : f;
-        return `<span class="${cls}" title="${f.replace(/"/g,'&quot;')}">${short}</span>`;
-      }).join('');
-    } else {
-      chips.innerHTML = '<span class="chip chip-muted">No relevant memories recalled</span>';
-    }
+  } else if (!d.use_memory) {
+    chips.innerHTML = '<span class="chip chip-new">Memory not used</span>';
   } else {
-    chips.innerHTML = '<span class="chip chip-new">Memory not used for this consultation</span>';
+    chips.innerHTML = '<span class="chip chip-muted">No relevant memories</span>';
+  }
+
+  // 5. Advice + follow-up
+  const adviceList = d.advice || [];
+  if (adviceList.length > 0) {
+    document.getElementById('r-advice').innerHTML = adviceList.slice(0, 3).map(a => `<li>${a}</li>`).join('');
+    show('advice-wrap');
+  } else {
+    hide('advice-wrap');
+  }
+  const followUp = d.follow_up || '';
+  if (followUp) {
+    document.getElementById('r-followup').textContent = followUp;
+    show('r-followup');
+  } else {
+    hide('r-followup');
   }
 
   // Memory trace
   const recallOk = d.use_memory !== false;
-  const retainOk = d.use_memory !== false;
-  document.getElementById('trace-recall').innerHTML = recallOk
-    ? '<span class="trace-ok">✓</span> recall()' : 'recall()';
+  document.getElementById('trace-recall').innerHTML = recallOk ? '<span class="trace-ok">✓</span> recall()' : 'recall()';
   document.getElementById('trace-reason').innerHTML = '<span class="trace-ok">✓</span> reason';
-  document.getElementById('trace-retain').innerHTML = retainOk
-    ? '<span class="trace-ok">✓</span> retain()' : 'retain()';
-  document.getElementById('trace-saved').style.display = retainOk ? 'inline' : 'none';
+  document.getElementById('trace-retain').innerHTML = recallOk ? '<span class="trace-ok">✓</span> retain()' : 'retain()';
+  document.getElementById('trace-saved').style.display = recallOk ? 'inline' : 'none';
 
-  // Diagnosis, prescription, reasoning
-  setText('r-diag', d.ai_diagnosis || '—');
-  setText('r-med', d.prescription?.medicine_name || '—');
-  setText('r-dose', d.prescription?.dosage || '—');
-  setText('r-inst', d.prescription?.notes || '');
-  setText('r-reason', d.ai_reasoning || '—');
+  // Raw reasoning (collapsed)
+  const rawText = d.raw_reasoning || d.ai_reasoning || '';
+  document.getElementById('r-raw').textContent = rawText;
+  hide('raw-section');
 
   // Draft edit
   document.getElementById('draft-med').value = d.prescription?.medicine_name || '';
@@ -1150,6 +1203,18 @@ function fillResult(d) {
   hide('status-sent'); hide('status-rejected');
 
   show('result-card');
+}
+
+function toggleRaw() {
+  const el = document.getElementById('raw-section');
+  const btn = el.previousElementSibling.querySelector('.raw-toggle');
+  if (el.classList.contains('hide')) {
+    el.classList.remove('hide');
+    btn.textContent = 'Hide full AI reasoning';
+  } else {
+    el.classList.add('hide');
+    btn.textContent = 'Show full AI reasoning';
+  }
 }
 
 /* ── Doctor: Approve ── */
@@ -1253,30 +1318,44 @@ async function doCompare() {
 }
 
 function formatCmp(d, hasMem, highlightMed) {
-  const memHtml = hasMem
-    ? (d.memory_used && d.memory_used !== 'Memory disabled (use_memory=false)'
-      ? `<div style="font-size:12px;color:var(--teal);background:var(--teal-lt);padding:8px 10px;border-radius:6px;margin-bottom:10px;">${d.memory_used.replace(/\n/g,'<br>')}</div>`
-      : '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">No memories recalled</div>')
-    : '<div style="font-size:12px;color:var(--amber);background:var(--amber-lt);padding:8px 10px;border-radius:6px;margin-bottom:10px;">Memory disabled — reasoning from symptoms only</div>';
-
-  const warningHtml = d.warning
-    ? `<div class="alert alert-red" style="margin-bottom:10px;font-size:12px;padding:8px 10px;"><span class="alert-icon">🚨</span>${d.warning}</div>`
+  // Compare view: ONLY alert + summary + prescription + memory chips. No advice or raw text.
+  const alertHtml = (d.alert || d.warning)
+    ? `<div class="alert alert-red" style="margin-bottom:8px;font-size:12px;padding:6px 10px;"><svg class="i i-sm" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg> ${d.alert||d.warning}</div>`
     : '';
 
-  const medName = d.prescription?.medicine_name || '—';
-  const medHtml = highlightMed
-    ? `<span class="diff-highlight">${medName}</span>`
-    : medName;
+  const summary = d.summary || d.ai_diagnosis || '—';
+
+  // Prescription compact
+  const rxList = d.rx || [];
+  let rxHtml;
+  if (rxList.length > 0) {
+    rxHtml = rxList.map(r => {
+      const name = highlightMed ? `<span class="diff-highlight">${r.drug}</span>` : r.drug;
+      return `<div style="font-size:13px;font-weight:600;color:var(--primary);">${name}</div><div style="font-size:12px;color:var(--muted);">${r.dose} ${r.frequency} × ${r.duration}</div>`;
+    }).join('');
+  } else {
+    const medName = d.prescription?.medicine_name || '—';
+    const name = highlightMed ? `<span class="diff-highlight">${medName}</span>` : medName;
+    rxHtml = `<div style="font-size:13px;font-weight:600;color:var(--primary);">${name}</div><div style="font-size:12px;color:var(--muted);">${d.prescription?.dosage||'—'}</div>`;
+  }
+
+  // Memory chips (compact, max 3)
+  const memFacts = d.memory_facts || [];
+  let memHtml;
+  if (hasMem && memFacts.length > 0) {
+    memHtml = '<div class="chip-list" style="margin-top:6px;">' + memFacts.slice(0,3).map(f => `<span class="chip" style="font-size:11px;">${f}</span>`).join('') + '</div>';
+  } else if (hasMem) {
+    memHtml = '<div style="font-size:11px;color:var(--muted);margin-top:4px;">No memories recalled</div>';
+  } else {
+    memHtml = '<div style="font-size:11px;color:var(--warn);margin-top:4px;">Memory disabled</div>';
+  }
 
   return `
-    ${warningHtml}
-    <div class="result-label">Memory</div>
-    ${memHtml}
-    <div class="result-label">Diagnosis</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:10px;">${d.ai_diagnosis||'—'}</div>
+    ${alertHtml}
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px;line-height:1.3;">${summary}</div>
     <div class="result-label">Prescription</div>
-    <div style="font-size:15px;font-weight:700;color:var(--teal);margin-bottom:4px;">${medHtml}</div>
-    <div style="font-size:13px;color:var(--muted);">${d.prescription?.dosage||'—'}</div>
+    ${rxHtml}
+    ${memHtml}
   `;
 }
 
@@ -1298,7 +1377,29 @@ async function loadRisk() {
       return;
     }
     const data = await res.json();
-    document.getElementById('risk-result').textContent = data.summary || 'No summary available.';
+    const s = data.structured || {};
+    let html = '';
+    if (s.headline) {
+      html += `<div class="risk-headline">${s.headline}</div>`;
+    }
+    if (s.risks && s.risks.length > 0) {
+      html += '<div class="result-label" style="margin-top:8px;">Risks</div><ul class="risk-list">';
+      s.risks.forEach(r => { html += `<li>${r}</li>`; });
+      html += '</ul>';
+    }
+    if (s.trends && s.trends.length > 0) {
+      html += '<div class="result-label" style="margin-top:8px;">Trends</div><ul class="risk-list">';
+      s.trends.forEach(t => { html += `<li>${t}</li>`; });
+      html += '</ul>';
+    }
+    // Show details toggle for full text
+    const fullText = s.full_text || data.summary || '';
+    if (fullText) {
+      html += '<button class="raw-toggle" style="margin-top:8px;" onclick="this.nextElementSibling.classList.toggle(\'hide\');this.textContent=this.textContent===\'Show details\'?\'Hide details\':\'Show details\'">Show details</button>';
+      html += `<div class="raw-text hide">${fullText}</div>`;
+    }
+    if (!html) html = data.summary || 'No summary available.';
+    document.getElementById('risk-result').innerHTML = html;
     show('risk-result');
   } catch(e) {
     setText('risk-err-text', `Connection error: ${e.message}`);
@@ -1376,9 +1477,9 @@ async function doDispense(rxId, btnEl) {
     }
 
     if (data.substitution) {
-      const alt = data.substitution.alternative || 'unknown';
+      const alt = data.substitution.substitute || data.substitution.alternative || 'unknown';
       const reason = data.substitution.reason || '';
-      showDispenseMsg('amber', `Out of stock: ${data.original_medicine}. Suggested alternative: <strong>${alt}</strong> (same class). ${reason}`);
+      showDispenseMsg('amber', `Out of stock: ${data.original_medicine}. Substituted: <strong>${alt}</strong>. <span style="color:var(--muted);font-weight:400;">${reason}</span>`);
     } else {
       showDispenseMsg('green', `Dispensed <strong>${data.dispensed_medicine}</strong> for ${data.patient_id}.`);
       if (data.stock_warning) {

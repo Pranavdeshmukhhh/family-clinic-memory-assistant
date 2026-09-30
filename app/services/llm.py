@@ -77,43 +77,48 @@ def _fallback_rule_engine(system_prompt: str, user_prompt: str) -> str:
     if "blood sugar" in prompt_lower or "diabetes" in prompt_lower or (
         "fatigue" in prompt_lower and has_diabetes_hist
     ):
-        diagnosis = "Type 2 Diabetes Mellitus - Glycemic Review"
-        med, dosage = "Metformin 500mg", "500mg twice daily with meals"
-        instructions = "Take after breakfast and dinner. Maintain continuous glucose monitoring."
-        reasoning = "Recalled patient records indicate Type 2 Diabetes on Metformin. Continuing therapy."
-        warning = None
+        return json.dumps({
+            "alert": "",
+            "summary": "Type 2 Diabetes review — continued glycaemic management needed.",
+            "prescription": [{"drug": "Metformin 500mg", "dose": "500mg", "frequency": "BD", "duration": "ongoing"}],
+            "memory_used": ["T2DM on Metformin", "Fasting glucose elevated"],
+            "advice": ["Take after meals", "Monitor glucose daily", "Stay hydrated"],
+            "follow_up": "Recheck fasting glucose in 4 weeks",
+        })
     elif "fever" in prompt_lower or "headache" in prompt_lower or "body ache" in prompt_lower:
-        diagnosis = "Acute Febrile Illness / Viral Syndrome"
-        med, dosage = "Paracetamol 500mg", "500mg every 6 to 8 hours as needed"
-        instructions = "Do not exceed 3000mg in 24 hours. Drink plenty of fluids."
-        reasoning = "Symptomatic treatment for acute pyrexia and body ache."
-        warning = None
+        return json.dumps({
+            "alert": "",
+            "summary": "Acute febrile illness, likely viral syndrome.",
+            "prescription": [{"drug": "Paracetamol 500mg", "dose": "500mg", "frequency": "Q6-8H PRN", "duration": "3 days"}],
+            "memory_used": [],
+            "advice": ["Do not exceed 3g/day", "Drink plenty of fluids", "Rest"],
+            "follow_up": "Return if fever persists beyond 3 days",
+        })
     elif "cough" in prompt_lower or "throat" in prompt_lower or "bacterial" in prompt_lower:
-        diagnosis = "Upper Respiratory Tract Infection"
-        med, dosage = "Amoxicillin 250mg", "250mg three times daily for 5 days"
-        instructions = "Complete the entire antibiotic course even if feeling better."
-        reasoning = "First-line empirical coverage for suspected bacterial respiratory infection."
-        warning = (
-            "CRITICAL ALLERGY CONFLICT: Patient history indicates penicillin allergy. "
-            "Discontinue penicillin class immediately!"
-            if has_allergy_penicillin
-            else None
+        alert = (
+            "ALLERGY: Patient has penicillin allergy — avoid all penicillins."
+            if has_allergy_penicillin else ""
         )
+        drug = "Azithromycin 500mg" if has_allergy_penicillin else "Amoxicillin 250mg"
+        freq = "OD" if has_allergy_penicillin else "TDS"
+        return json.dumps({
+            "alert": alert,
+            "summary": "Upper respiratory tract infection, likely bacterial pharyngitis.",
+            "prescription": [{"drug": drug, "dose": drug.split()[-1], "frequency": freq, "duration": "5 days"}],
+            "memory_used": (["Penicillin allergy (hives)"] if has_allergy_penicillin else []),
+            "advice": ["Complete full course", "Warm salt-water gargle", "Rest voice"],
+            "follow_up": "Review in 5 days if symptoms persist",
+            "warning": alert or None,
+        })
     else:
-        diagnosis = "General Clinical Evaluation / Gastro-esophageal Reflux"
-        med, dosage = "Omeprazole 20mg", "20mg once daily before breakfast"
-        instructions = "Take 30 minutes before first meal of the day."
-        reasoning = "First-line gastric acid suppression for dyspeptic symptoms."
-        warning = None
-
-    return json.dumps({
-        "diagnosis": diagnosis,
-        "medicine_name": med,
-        "dosage": dosage,
-        "instructions": instructions,
-        "reasoning": reasoning,
-        "warning": warning,
-    })
+        return json.dumps({
+            "alert": "",
+            "summary": "Dyspeptic symptoms — likely GERD or functional dyspepsia.",
+            "prescription": [{"drug": "Omeprazole 20mg", "dose": "20mg", "frequency": "OD", "duration": "14 days"}],
+            "memory_used": [],
+            "advice": ["Take 30 min before breakfast", "Avoid spicy food", "Elevate head of bed"],
+            "follow_up": "Review in 2 weeks",
+        })
 
 
 def groq_chat(system_prompt: str, user_prompt: str) -> str:
